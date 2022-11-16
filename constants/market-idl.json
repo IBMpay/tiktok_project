@@ -1,0 +1,356 @@
+{
+  "version": "0.1.0",
+  "name": "tiktok_market",
+  "instructions": [
+    {
+      "name": "mintNft",
+      "accounts": [
+        {
+          "name": "metadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterEdition",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userUsdcAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "treasuryUsdcAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "creatorKey",
+          "type": "publicKey"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "listNft",
+      "accounts": [
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "nftMetadataAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sellerNftTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "creatorRoyalty",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "delistNft",
+      "accounts": [
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sellerNftTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "escrowNonce",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "buyNft",
+      "accounts": [
+        {
+          "name": "escrowAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "nftMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "buyerNftTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seller",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sellerUsdcAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "buyer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "buyerUsdcAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "creatorUsdcAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "escrowNonce",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Escrow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "seller",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "creatorRoyalty",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NftListed",
+      "msg": "Nft already listed. Must delist first to update listing."
+    },
+    {
+      "code": 6001,
+      "name": "NftUnlisted",
+      "msg": "Nft is already unlisted."
+    },
+    {
+      "code": 6002,
+      "name": "UnknownSeller",
+      "msg": "Person attempting to delist is not the one who originally listed."
+    }
+  ]
+}
