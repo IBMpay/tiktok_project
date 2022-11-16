@@ -333,7 +333,7 @@ const SetNftDetails = () => {
                         onChange={(e) => setPrice(e.target.value)}
                       />
                       <span className="text-xs text-gray-600">
-                        FYI, there's a 8% service fee for sales on AYOO NFT
+                        FYI, there&apos;s a 8% service fee for sales on AYOO NFT
                       </span>
                     </>
                   )}
