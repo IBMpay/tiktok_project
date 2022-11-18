@@ -144,8 +144,10 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
           "@web3auth/solana-wallet-connector-plugin"
         );
         const torusPlugin = new SolanaWalletConnectorPlugin({
-          torusWalletOpts: {},
+          torusWalletOpts: { modalZIndex: -1 },
           walletInitOptions: {
+            /* 
+            apiKey: clientId,
             whiteLabel: {
               name: "Whitelabel Demo",
               theme: { isDark: false, colors: { torusBrand1: "#3AA4E7" } },
@@ -153,11 +155,11 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
                 "https://firebasestorage.googleapis.com/v0/b/tiktok-blockchain.appspot.com/o/logo-d.png?alt=media&token=cfe15772-dc17-476a-b7e4-76d1cb8d29ea",
               logoDark:
                 "https://firebasestorage.googleapis.com/v0/b/tiktok-blockchain.appspot.com/o/logo-light.png?alt=media&token=5f3a4d66-ba64-4de6-ae80-0e3e530d7eb2",
-              topupHide: false,
+              topupHide: true,
               defaultLanguage: "en",
             },
-            // useWalletConnect: true,
             enableLogging: true,
+           */
           },
         });
         // const paym = await torusPlugin.torusWalletInstance.initiateTopup()
@@ -166,7 +168,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
         setTorusPlugin(torusPlugin);
 
         const adapter = new OpenloginAdapter({
-          chainConfig: null,
+          chainConfig: currentChainConfig,
           adapterSettings: { network: web3AuthNetwork, clientId },
         });
         web3AuthInstance.configureAdapter(adapter);
@@ -182,7 +184,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
         const username = user.email.split("@", 1)[0].replace(".", "");
         // console.log(username);
         const userRef = doc(db, "users", username);
-        // console.log("user ref: ", userRef);
+        console.log("user ref: ", userRef);
         const userSnap = await getDoc(userRef);
         if (!userSnap.exists()) {
           // console.log("wallet:", wallets[0]);

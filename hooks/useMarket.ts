@@ -255,7 +255,7 @@ export const useMarket = () => {
       } catch (error) {
         console.log(error);
       }
-    } else console.log("figure");
+    }
   };
 
   const listNft = async (
@@ -324,12 +324,12 @@ export const useMarket = () => {
         await torusPlugin.torusWalletInstance.signAndSendTransaction(listTx);
 
         console.log(listTx);
-      } catch (error) {
-        console.log(error);
-      } finally {
         setLoading(false);
         setTransactionPending(false);
         return true;
+      } catch (error) {
+        console.log(error);
+        return false;
       }
     }
   };
@@ -371,6 +371,7 @@ export const useMarket = () => {
             mint: nftMintAddress,
             owner: anchorWallet.publicKey,
           });
+
         const blockhash = await connection.getLatestBlockhash("finalized");
         const delistTx = new Transaction(blockhash);
         const delistIx = await program.methods
@@ -391,12 +392,12 @@ export const useMarket = () => {
 
         await torusPlugin.torusWalletInstance.signAndSendTransaction(delistTx);
         console.log(delistIx);
-      } catch (error) {
-        console.log(error);
-      } finally {
         setLoading(false);
         setTransactionPending(false);
         return true;
+      } catch (error) {
+        console.log(error);
+        return false;
       }
     }
   };
@@ -485,13 +486,12 @@ export const useMarket = () => {
         buyTx.feePayer = anchorWallet.publicKey;
 
         await torusPlugin.torusWalletInstance.signAndSendTransaction(buyTx);
-        console.log(buyIx);
-      } catch (error) {
-        console.log(error);
-      } finally {
         setLoading(false);
         setTransactionPending(false);
         return true;
+      } catch (error) {
+        console.log(error);
+        return false;
       }
     }
   };

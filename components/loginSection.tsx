@@ -1,13 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useWeb3Auth } from "../services/web3auth";
 import Button from "./Button";
 
 function LoginSection({ login }) {
+  const { provider, web3Auth } = useWeb3Auth();
+  useEffect(() => {
+    const init = async () => {
+      await web3Auth.connect();
+    };
+    init();
+  }, [provider]);
   return (
     <div
       className="h-full min-h-screen w-screen bg-cover flex items-center justify-center"
       style={{ backgroundImage: "url(/assets/bg.png)" }}
     >
-      <div className="pt-10 w-1/3">
+      {/* <div className="pt-10 w-1/3">
         <div className="w-32 mx-auto mb-8">
           <img src="/assets/logo-white.png" />
         </div>
@@ -25,7 +33,7 @@ function LoginSection({ login }) {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

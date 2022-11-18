@@ -1,4 +1,4 @@
-import { Container } from "@mui/material";
+import { Container, Snackbar } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import Button from "../../components/Button";
 import { Web3Auth } from "@web3auth/web3auth";
@@ -15,7 +15,13 @@ import { ref, uploadBytes, getDownloadURL } from "@firebase/storage";
 import { v4 } from "uuid";
 import { useWeb3Auth } from "../../services/web3auth";
 import LoginSection from "../../components/loginSection";
-
+import MuiAlert, { AlertColor, AlertProps } from "@mui/material/Alert";
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
+  props,
+  ref
+) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 const clientId =
   "BOjke_VdSeEjE5Gap8t4hfg_1QRymSFuTYxklhGttI-6H-ZJARwiLQunE9PYrl9xyxwNerQQT6u01uDP744_mM8";
 interface UserData {
@@ -45,9 +51,24 @@ const SetNftDetails = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [reviewMode, setReviewMode] = useState<boolean>(false);
   const [mediaType, setMediaType] = useState<string>("video/mp4");
-  // const [provider, setProvider] = useState<SafeEventEmitterProvider | null>(
-  // null
-  // );
+  const [snackbarMode, setSnackbarMode] = useState<AlertColor>("error");
+  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+  const [open, setOpen] = React.useState(false);
+
+  const handleClick = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
   const {
     provider,
     login,
@@ -61,6 +82,7 @@ const SetNftDetails = () => {
     getUser,
     getBalance,
     signMessage,
+    getWallets,
     signV4Message,
   } = useWeb3Auth();
   const [web3auth, setWeb3auth] = useState<Web3Auth | null>(null);
@@ -98,6 +120,17 @@ const SetNftDetails = () => {
     }
   };
 
+  useEffect(() => {
+    const init = async () => {
+      if (provider) {
+        const address = await getWallets();
+        console.log("add: ", address);
+        setCreator(address[0]);
+      }
+    };
+    init();
+  }, [provider]);
+
   const uploadNft = async (e) => {
     e.preventDefault();
     try {
@@ -125,6 +158,16 @@ const SetNftDetails = () => {
       // console.log("the data", data);
       const seed = Math.floor(100000 + Math.random() * 900000);
       console.log(seed);
+      console.log("something to upload: ", {
+        title,
+        description,
+        videoUrl,
+        mediaType,
+        metadataUrl: data.metadata,
+        price,
+        royalties,
+        status: "offchain",
+      });
       await setDoc(
         doc(db, "users", username, "collectibles", seed.toString()),
         {
@@ -138,8 +181,13 @@ const SetNftDetails = () => {
           status: "offchain",
         }
       );
+      setSnackbarMode("success");
+      setSnackbarMessage("Your NFT has been successfully created!");
+      setOpen(true);
     } catch (error) {
       console.log(error);
+      setSnackbarMessage("Something went wrong!");
+      setOpen(true);
     } finally {
       setLoading(false);
     }
@@ -403,6 +451,15 @@ const SetNftDetails = () => {
               {/* </form> */}
             </div>
           </div>
+          <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+            <Alert
+              onClose={handleClose}
+              severity={snackbarMode}
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
         </Container>
       ) : (
         <LoginSection login={login} />

@@ -5,6 +5,9 @@
 * {
   transition: 0.3s all;
 }
+iframe#torusIframe {
+  display: none !important;
+}
 html,
 body {
   padding: 0;

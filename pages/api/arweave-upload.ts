@@ -80,7 +80,7 @@ export default async function handler(
       const transaction = await arweave.createTransaction({
         data: data,
       });
-
+      console.log("med");
       transaction.addTag("Content-Type", media_type);
       const wallet = JSON.parse(
         fs.readFileSync("arweave-keypair.json", "utf-8")
@@ -146,6 +146,7 @@ export default async function handler(
 
       res.status(200).json({ video: vidUrl, metadata: metadataUrl });
     } catch (error) {
+      console.log(error);
       res.status(400).json({ error: error });
     }
   }

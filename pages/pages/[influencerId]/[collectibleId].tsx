@@ -240,6 +240,7 @@ const Grifter = () => {
         mintAddr,
         influencerWallet
       );
+      console.log("transaction is: ", tx);
       if (tx) {
         console.log("your nft has been listed");
         const user = await getUser();
@@ -303,6 +304,7 @@ const Grifter = () => {
       // creator: string
       setLoadingProcess(true);
       const tx = await delistNft(mintAddr, influencerWallet);
+      console.log("transaction is: ", tx);
       if (tx) {
         console.log("your nft has been delisted");
         const user = await getUser();
@@ -365,6 +367,7 @@ const Grifter = () => {
       const sellerData = (await getDoc(sellerRef)).data();
       setLoadingProcess(true);
       const tx = await buyNft(mintAddr, sellerData.wallet, influencerWallet);
+      console.log("transaction is: ", tx);
       if (tx) {
         console.log("your nft has been delisted");
         const user = await getUser();
@@ -431,6 +434,37 @@ const Grifter = () => {
                   <video width="620" height="620" controls>
                     <source src={mediaUrl} type="video/mp4" />
                   </video>
+                </div>
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">Description</h1>
+                  <p className="text-gray-500 text-sm mt-2">{desc}</p>
+                </div>
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">Details</h1>
+                  <div className="rounded-xl mt-4 border-1 border border-black p-6">
+                    <div className="flex justify-between">
+                      <p>Contract address</p>
+                      <p className="justify-end">
+                        <a
+                          href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
+                        >
+                          {truncate(mintAddr)}
+                        </a>
+                      </p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>Blockchain</p>
+                      <p className="justify-end">
+                        <a href="">Solana</a>
+                      </p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>Token Standard</p>
+                      <p className="justify-end">
+                        <a href="">Solana</a>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -544,37 +578,7 @@ const Grifter = () => {
                     </button>
                   )}
                 </div>
-                <div className="mt-6">
-                  <h1 className="font-bold text-xl">Description</h1>
-                  <p className="text-gray-500 text-sm mt-2">{desc}</p>
-                </div>
-                <div className="mt-6">
-                  <h1 className="font-bold text-xl">Details</h1>
-                  <div className="rounded-xl mt-4 border-1 border border-black p-6">
-                    <div className="flex justify-between">
-                      <p>Contract address</p>
-                      <p className="justify-end">
-                        <a
-                          href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
-                        >
-                          {truncate(mintAddr)}
-                        </a>
-                      </p>
-                    </div>
-                    <div className="flex justify-between">
-                      <p>Blockchain</p>
-                      <p className="justify-end">
-                        <a href="">Solana</a>
-                      </p>
-                    </div>
-                    <div className="flex justify-between">
-                      <p>Token Standard</p>
-                      <p className="justify-end">
-                        <a href="">Solana</a>
-                      </p>
-                    </div>
-                  </div>
-                </div>
+
                 <div className="mt-6">
                   <h1 className="font-bold text-xl">History</h1>
                   <div className="mt-4 max-h-96 overflow-y-scroll">

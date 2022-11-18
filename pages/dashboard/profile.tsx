@@ -156,7 +156,7 @@ const SetNftDetails = () => {
                   </Link>
                 </p>
                 <p className="text-xs text-gray-400 text-center mt-2">
-                  {truncate(myAddress)}
+                  {myAddress}
                 </p>
               </div>
               <div>
