@@ -6,7 +6,11 @@ function LoginSection({ login }) {
   const { provider, web3Auth } = useWeb3Auth();
   useEffect(() => {
     const init = async () => {
-      await web3Auth.connect();
+      try {
+        await web3Auth.connect();
+      } catch (error) {
+        console.log(error);
+      }
     };
     init();
   }, [provider]);

@@ -134,7 +134,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
           // get your client id from https://dashboard.web3auth.io
           clientId,
           uiConfig: {
-            theme: "dark",
+            theme: "light",
             loginMethodsOrder: ["google"],
             appLogo: "/assets/logo.png",
           },
