@@ -176,26 +176,6 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
         subscribeAuthEvents(web3AuthInstance, torusPlugin);
         setWeb3Auth(web3AuthInstance);
         await web3AuthInstance.initModal();
-        const user = await web3Auth.getUserInfo();
-        const wallets = await provider.getAccounts();
-        // const wallets = ;
-        // console.log(wallets);
-        // console.log("the provider:", user);
-        const username = user.email.split("@", 1)[0].replace(".", "");
-        // console.log(username);
-        const userRef = doc(db, "users", username);
-        console.log("user ref: ", userRef);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          // console.log("wallet:", wallets[0]);
-          // console.log("doesn't exist");
-          await setDoc(userRef, {
-            avatarUrl: user.profileImage,
-            name: user.name,
-            wallet: wallets[0],
-            email: user.email,
-          });
-        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -206,6 +186,41 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
     init();
   }, [chain, web3AuthNetwork, setWalletProvider, ADAPTER_EVENTS]);
 
+  useEffect(() => {
+    const init = async () => {
+      console.log("here 1");
+      if (provider) {
+        try {
+          const user = await web3Auth.getUserInfo();
+          console.log("here 2", user);
+          const wallets = await provider.getAccounts();
+          console.log("here 3");
+          // const wallets = ;
+          // console.log(wallets);
+          // console.log("the provider:", user);
+          const username = user.email.split("@", 1)[0].replace(".", "");
+          // console.log(username);
+          const userRef = doc(db, "users", username);
+          console.log("user ref: ", userRef);
+          const userSnap = await getDoc(userRef);
+          // const user = userSnap.d
+          if (!userSnap.exists()) {
+            // console.log("wallet:", wallets[0]);
+            // console.log("doesn't exist");
+            await setDoc(userRef, {
+              avatarUrl: user.profileImage,
+              name: user.name,
+              wallet: wallets[0],
+              email: user.email,
+            });
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    };
+    init();
+  }, [ADAPTER_EVENTS]);
   const login = async () => {
     if (!web3Auth) {
       console.log("web3auth not initialized yet");
