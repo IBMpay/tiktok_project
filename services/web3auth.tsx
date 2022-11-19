@@ -189,24 +189,20 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
   useEffect(() => {
     const init = async () => {
       console.log("here 1");
-      if (provider) {
+      if (provider && web3Auth) {
         try {
           const user = await web3Auth.getUserInfo();
           console.log("here 2", user);
           const wallets = await provider.getAccounts();
           console.log("here 3");
-          // const wallets = ;
-          // console.log(wallets);
-          // console.log("the provider:", user);
           const username = user.email.split("@", 1)[0].replace(".", "");
           // console.log(username);
           const userRef = doc(db, "users", username);
           console.log("user ref: ", userRef);
           const userSnap = await getDoc(userRef);
-          // const user = userSnap.d
+          console.log(userSnap);
+
           if (!userSnap.exists()) {
-            // console.log("wallet:", wallets[0]);
-            // console.log("doesn't exist");
             await setDoc(userRef, {
               avatarUrl: user.profileImage,
               name: user.name,
@@ -220,7 +216,8 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       }
     };
     init();
-  }, [ADAPTER_EVENTS]);
+  }, [provider, ADAPTER_EVENTS, web3Auth]);
+
   const login = async () => {
     if (!web3Auth) {
       console.log("web3auth not initialized yet");

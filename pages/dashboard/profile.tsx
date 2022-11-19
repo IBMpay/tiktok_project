@@ -77,24 +77,30 @@ const SetNftDetails = () => {
   useEffect(() => {
     const init = async () => {
       if (provider) {
-        const user = await getUser();
-        const username = user.email.split("@", 1)[0];
-        setMyUserName(username);
-        const userRef = doc(db, "users", username);
-        const address = await getWallets();
-        console.log("add: ", address);
-        setMyAddress(address[0]);
-        const userResponse = await getDoc(userRef);
-        const userData = userResponse.data();
-        setFullName(userData.name);
-        setAvatarUrl(userData.avatarUrl);
-        setEmail(userData.email);
-        setIsInfluencer(userData.isInfluencer);
-        if (userData.isInfluencer) {
-          setFollowerCount(userData.followerCount);
-          setFollowingCount(userData.followingCount);
-          setLikesCount(userData.likesCount);
-          setBioDescription(userData.bioDescription);
+        try {
+          const user = await getUser();
+          const username = user.email.split("@", 1)[0];
+          setMyUserName(username);
+          const userRef = doc(db, "users", username);
+          const address = await getWallets();
+          console.log("add: ", address);
+          setMyAddress(address[0]);
+          const userResponse = await getDoc(userRef);
+          if (userResponse.exists) {
+            const userData = userResponse.data();
+            setFullName(userData.name);
+            setAvatarUrl(userData.avatarUrl);
+            setEmail(userData.email);
+            setIsInfluencer(userData.isInfluencer);
+            if (userData.isInfluencer) {
+              setFollowerCount(userData.followerCount);
+              setFollowingCount(userData.followingCount);
+              setLikesCount(userData.likesCount);
+              setBioDescription(userData.bioDescription);
+            }
+          }
+        } catch (error) {
+          console.log(error);
         }
       }
     };
