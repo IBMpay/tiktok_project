@@ -363,9 +363,14 @@ const Grifter = () => {
       // creatorRoyalty: number,
       // mint: string,
       // creator: string
+      console.log("hello");
       const sellerRef = doc(db, "users", owner);
       const sellerData = (await getDoc(sellerRef)).data();
       setLoadingProcess(true);
+      console.log("mint: ", mintAddr);
+      console.log("seller: ", sellerData.wallet);
+      console.log("influencer: ", influencerWallet);
+
       const tx = await buyNft(mintAddr, sellerData.wallet, influencerWallet);
       console.log("transaction is: ", tx);
       if (tx) {
