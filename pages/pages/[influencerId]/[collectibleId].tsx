@@ -235,7 +235,7 @@ const Grifter = () => {
       }
     };
     init();
-  }, [influencerId, provider]);
+  }, [influencerId, collectibleId, provider]);
 
   const handleMint = async () => {
     try {

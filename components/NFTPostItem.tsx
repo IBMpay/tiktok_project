@@ -13,10 +13,12 @@ function NFTPostItem({
   description,
   provider,
 }) {
+  // console.log("id=", id);
   return (
     <div className=" rounded-xl overflow-hidden drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300">
-      <Link href={`${baseLink}/${id}`}>
+      <a href={`${baseLink}/${id}`}>
         <div className="flex flex-col">
+          {/* <p>{id}</p> */}
           <div>
             {/* <img src="assets/offerImg.png" /> */}
             {type !== "video/mp4" &&
@@ -62,7 +64,7 @@ function NFTPostItem({
             </div>
           </div>
         </div>
-      </Link>
+      </a>
     </div>
   );
 }
