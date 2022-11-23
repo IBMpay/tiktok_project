@@ -509,7 +509,7 @@ const Grifter = () => {
 
   return (
     <>
-      {!isConnecting /* 
+      {!isConnecting && provider /* 
         provider ? ( */ ? (
         <Container>
           <Header />

@@ -128,7 +128,7 @@ const Profile = () => {
 
   return (
     <>
-      {!isConnecting ? (
+      {!isConnecting && provider ? (
         <Container>
           <Header />
           <div className="md:flex mx-auto mt-20">

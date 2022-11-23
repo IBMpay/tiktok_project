@@ -147,7 +147,7 @@ function Dashboard() {
 
   return (
     <>
-      {!isConnecting ? (
+      {!isConnecting && provider ? (
         <Container>
           <Header />
           <div className="flex md:w-1/2 lg:w-1/2 mx-auto flex-col mt-40">
