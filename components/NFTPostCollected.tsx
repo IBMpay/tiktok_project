@@ -8,12 +8,13 @@ function NFTPostCollected({
   baseLink,
   id,
   price,
+  creator,
   type,
   provider,
 }) {
   return (
     <div className=" rounded-xl overflow-hidden drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300">
-      <Link href={`${baseLink}/${id}`}>
+      <Link href={`/pages/${creator}/${id}`}>
         <div className="flex flex-col">
           <div>
             {/* <img src="assets/offerImg.png" /> */}

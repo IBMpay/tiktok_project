@@ -96,7 +96,6 @@ const Profile = () => {
             setUsername(influencerUsername);
 
             setDescription(userData.bioDescription);
-            console.log("follow: ", userData.followerCount);
             if (userData.followerCount)
               setFollowersCount(userData.followerCount);
 
@@ -192,6 +191,7 @@ const Profile = () => {
                   <NFTPostCollected
                     key={i}
                     id={nft.id}
+                    creator={nft.creator}
                     baseLink={path}
                     video={nft.media}
                     title={nft.title}
