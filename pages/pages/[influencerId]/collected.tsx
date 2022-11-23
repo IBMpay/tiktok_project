@@ -66,7 +66,7 @@ const Profile = () => {
   console.log(influencerId);
   useEffect(() => {
     const init = async () => {
-      if (!isConnected && provider) router.push("/login");
+      // if (!isConnected && !isConnecting) router.push("/login");
       if (influencerId && provider) {
         try {
           setPath(`/pages/${influencerId}`);
@@ -94,9 +94,14 @@ const Profile = () => {
             const userData = userSnap.data();
             console.log(userData);
             setUsername(influencerUsername);
+
             setDescription(userData.bioDescription);
-            setFollowersCount(userData.followerCount);
-            setFollowingCount(userData.followingCount);
+            console.log("follow: ", userData.followerCount);
+            if (userData.followerCount)
+              setFollowersCount(userData.followerCount);
+
+            if (userData.followingCount)
+              setFollowingCount(userData.followingCount);
             setAvatarUrl(userData.avatarUrl);
             setWalletAddress(userData.wallet);
             setFullName(userData.name);

@@ -28,6 +28,7 @@ import { truncate } from "../../../utils/string";
 import NFTPostItem from "../../../components/NFTPostItem";
 import Header from "../../../components/Header";
 import { Web3Auth } from "@web3auth/web3auth";
+import axios from "axios";
 const Grifter = () => {
   const router = useRouter();
   const { influencerId, collectibleId } = router.query;
@@ -72,6 +73,10 @@ const Grifter = () => {
   const [path, setPath] = useState<string>("");
   const [mediaType, setMediaType] = useState<string>("");
   const [modalMessage, setModalMessage] = useState<string>("");
+  const [balance, setBalance] = useState(0);
+  const [usdcBalance, setUsdcBalance] = useState(0);
+  const [notEnoughUsdc, setNotEnoughUsdc] = useState<boolean>(false);
+  const [notEnoughSol, setNotEnoughSol] = useState<boolean>(false);
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -80,7 +85,7 @@ const Grifter = () => {
     useMarket();
   useEffect(() => {
     const init = async () => {
-      if (!isConnected && provider) router.push("/login");
+      // if (!isConnected && !isConnecting) router.push("/login");
 
       if (influencerId && collectibleId && provider) {
         try {
@@ -161,6 +166,58 @@ const Grifter = () => {
             console.log("the video is : ", collectiblesData.videoUrl);
             setMediaUrl(collectiblesData.videoUrl);
             setArtist(influencerId.toString());
+
+            const response = await axios({
+              url: `https://api.devnet.solana.com`,
+              method: "post",
+              headers: { "Content-Type": "application/json" },
+              data: [
+                {
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "getTokenAccountsByOwner",
+                  params: [
+                    address[0],
+                    {
+                      mint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+                    },
+                    {
+                      encoding: "jsonParsed",
+                    },
+                  ],
+                },
+              ],
+            });
+            const solResponse = await axios({
+              url: `https://api.devnet.solana.com`,
+              method: "post",
+              headers: { "Content-Type": "application/json" },
+              data: [
+                {
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "getBalance",
+                  params: [address[0]],
+                },
+              ],
+            });
+            const usdcBal =
+              +response.data[0].result.value[0].account.data.parsed.info
+                .tokenAmount.uiAmountString;
+            const solBal = +(
+              solResponse.data[0].result.value / 1_000_000_000
+            ).toFixed(3);
+            setNotEnoughSol(solBal < 0.03);
+            switch (collectiblesData.status) {
+              case "offchain":
+                if (username !== influencerId && price >= usdcBal)
+                  setNotEnoughUsdc(true);
+                break;
+              case "listed":
+                if (collectiblesData.owner !== username && price >= usdcBal)
+                  setNotEnoughUsdc(true);
+                break;
+            }
           } else {
             console.log("doesn't exist");
           }
@@ -640,45 +697,159 @@ const Grifter = () => {
                     )}
                   </div>
                   {status === "offchain" && (
-                    <button
-                      className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                      onClick={handleMint}
-                    >
-                      Mint Now
-                    </button>
+                    <>
+                      {notEnoughUsdc || notEnoughSol ? (
+                        <>
+                          <button
+                            disabled
+                            className=" border-none text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                          >
+                            Mint Now
+                          </button>
+                          <p className="text-sm my-4 text text-center font-semibold justify-center flex">
+                            Please fund your wallet to be able to mint the token{" "}
+                            <img
+                              src="/assets/usdc.webp"
+                              className="w-4 h-4 mt-1 ml-1"
+                            />
+                          </p>
+                          <button
+                            className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            onClick={showTopup}
+                          >
+                            Fund your wallet
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                          onClick={handleMint}
+                        >
+                          Mint Now
+                        </button>
+                      )}
+                    </>
                   )}
                   {status === "onchain" && owner === userName && (
                     <>
-                      <input
-                        type="text"
-                        value={listPrice}
-                        placeholder="Price here"
-                        className="w-full p-2 pl-4 rounded-lg my-3 border border-gray-300"
-                        onChange={(e) => setListPrice(e.target.value)}
-                      />
-                      <button
-                        className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                        onClick={handleList}
-                      >
-                        List Now
-                      </button>
+                      {notEnoughSol ? (
+                        <>
+                          <input
+                            disabled
+                            type="text"
+                            value={listPrice}
+                            placeholder="Price here"
+                            className="w-full p-2 pl-4 rounded-lg my-3 border border-gray-300"
+                            onChange={(e) => setListPrice(e.target.value)}
+                          />
+                          <button
+                            disabled
+                            className=" border-none text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                          >
+                            List Now
+                          </button>
+                          <p className="text-sm my-4 text text-center font-semibold justify-center flex">
+                            Please fund your wallet to be able to list the token{" "}
+                            <img
+                              src="/assets/usdc.webp"
+                              className="w-4 h-4 mt-1 ml-1"
+                            />
+                          </p>
+                          <button
+                            className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            onClick={showTopup}
+                          >
+                            Fund your wallet
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            type="text"
+                            value={listPrice}
+                            placeholder="Price here"
+                            className="w-full p-2 pl-4 rounded-lg my-3 border border-gray-300"
+                            onChange={(e) => setListPrice(e.target.value)}
+                          />
+                          <button
+                            className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            onClick={handleList}
+                          >
+                            List Now
+                          </button>
+                        </>
+                      )}
                     </>
                   )}
                   {status === "listed" && owner === userName && (
-                    <button
-                      className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                      onClick={handleDelist}
-                    >
-                      Delist Now
-                    </button>
+                    <>
+                      {notEnoughSol ? (
+                        <>
+                          <button
+                            disabled
+                            className="border-none text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                          >
+                            Delist Now
+                          </button>
+                          <p className="text-sm my-4 text text-center font-semibold justify-center flex">
+                            Please fund your wallet to be able to delist the
+                            token{" "}
+                            <img
+                              src="/assets/usdc.webp"
+                              className="w-4 h-4 mt-1 ml-1"
+                            />
+                          </p>
+                          <button
+                            className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            onClick={showTopup}
+                          >
+                            Fund your wallet
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                          onClick={handleDelist}
+                        >
+                          Delist Now
+                        </button>
+                      )}
+                    </>
                   )}
                   {status === "listed" && owner !== userName && (
-                    <button
-                      className="mt-1 border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                      onClick={handleBuy}
-                    >
-                      Buy Now for ${currentPrice} USDC
-                    </button>
+                    <>
+                      {notEnoughSol ? (
+                        <>
+                          <button
+                            disabled
+                            className="border-none text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            // onClick={handleBuy}
+                          >
+                            Buy Now for ${currentPrice} USDC
+                          </button>
+                          <p className="text-sm my-4 text text-center font-semibold justify-center flex">
+                            Please fund your wallet to be able to buy the token{" "}
+                            <img
+                              src="/assets/usdc.webp"
+                              className="w-4 h-4 mt-1 ml-1"
+                            />
+                          </p>
+                          <button
+                            className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            onClick={showTopup}
+                          >
+                            Fund your wallet
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="mt-1 border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                          onClick={handleBuy}
+                        >
+                          Buy Now for ${currentPrice} USDC
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

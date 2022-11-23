@@ -83,12 +83,13 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
 }: IWeb3AuthProps) => {
   const [web3Auth, setWeb3Auth] = useState<Web3Auth | null>(null);
   const [torusPlugin, setTorusPlugin] = useState<any | null>(null);
-  const router = useRouter();
+  // const router = useRouter();
   const [provider, setProvider] = useState<IWalletProvider | null>(null);
   const [user, setUser] = useState<unknown | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isConnecting, setIsConnecting] = useState<boolean>(true);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+
   const setWalletProvider = useCallback(
     (web3authProvider: SafeEventEmitterProvider) => {
       const walletProvider = getWalletProvider(
@@ -106,23 +107,27 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       // Can subscribe to all ADAPTER_EVENTS and LOGIN_MODAL_EVENTS
       web3auth.on(ADAPTER_EVENTS.CONNECTED, (data: any) => {
         console.log("Yeah!, you are successfully logged in", data);
-        if (data?.reconnected == false) {
-          router.push("/dashboard/profile");
-        }
+        // if (data.reconnected == false) {
+        //   router.push("/dashboard/profile");
+        // }
         setUser(data);
-        setIsConnected(true);
-        setIsConnecting(false);
+        // setIsConnecting(false);
+        setIsLoading(false);
         setWalletProvider(web3auth?.provider as SafeEventEmitterProvider);
+        setIsConnecting(false);
+        setIsConnected(true);
       });
 
       web3auth.on(ADAPTER_EVENTS.CONNECTING, () => {
         console.log("connecting");
+        // setIsLoading(false);
+        // setIsConnected(true);
         // setIsConnecting(true);
-        setIsConnected(true);
       });
 
       web3auth.on(ADAPTER_EVENTS.DISCONNECTED, () => {
         console.log("disconnected");
+        setIsLoading(false);
         setUser(null);
         router.push("/login");
       });
@@ -130,19 +135,13 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       web3auth.on(ADAPTER_EVENTS.ERRORED, (error: unknown) => {
         console.error("some error or user has cancelled login request", error);
       });
-      web3auth.on(ADAPTER_EVENTS.READY, () => {
-        console.log("some error or user has cancelled login request");
-      });
-      web3auth.on(ADAPTER_EVENTS.NOT_READY, () => {
-        console.log("some error or user has cancelled login request");
-      });
     };
 
     const currentChainConfig = CHAIN_CONFIG[chain];
 
     async function init() {
       try {
-        setIsLoading(true);
+        // setIsLoading(true);
         const clientId =
           "BOjke_VdSeEjE5Gap8t4hfg_1QRymSFuTYxklhGttI-6H-ZJARwiLQunE9PYrl9xyxwNerQQT6u01uDP744_mM8";
         const web3AuthInstance = new Web3Auth({
@@ -195,7 +194,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       } catch (error) {
         console.error(error);
       } finally {
-        setIsLoading(false);
+        // setIsLoading(false);
         setIsConnecting(false);
       }
     }
@@ -204,20 +203,13 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
 
   useEffect(() => {
     const init = async () => {
-      console.log("here 1");
-      console.log(web3Auth);
-
-      if (web3Auth && web3Auth?.cachedAdapter == null) router.push("/login");
       if (provider && web3Auth) {
         try {
           const user = await web3Auth.getUserInfo();
-          console.log("here 2", user);
           const wallets = await provider.getAccounts();
-          console.log("here 3");
           const username = user.email.split("@", 1)[0].replace(".", "");
           // console.log(username);
           const userRef = doc(db, "users", username);
-          console.log("user ref: ", userRef);
           const userSnap = await getDoc(userRef);
           console.log(userSnap);
 
@@ -235,7 +227,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       }
     };
     init();
-  }, [provider, web3Auth]);
+  }, [provider, ADAPTER_EVENTS, web3Auth]);
 
   const login = async () => {
     if (!web3Auth) {
@@ -255,6 +247,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       return;
     }
     await web3Auth.logout();
+    router.push("/login");
     setProvider(null);
   };
 
@@ -284,11 +277,17 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       uiConsole("web3auth not initialized yet");
       return;
     }
-    const accounts = await provider.getAccounts();
-    const user = await torusPlugin?.initiateTopup("moonpay", {
-      selectedAddress: accounts[0],
-    });
-    uiConsole(user);
+    try {
+      const accounts = await provider.getAccounts();
+
+      const user = await torusPlugin?.initiateTopup("moonpay", {
+        selectedAddress: accounts[0],
+      });
+      console.log(user);
+      uiConsole(user);
+    } catch (error) {
+      console.log(error);
+    }
   };
   // const showWalletConnectScanner = async () => {
   //   if (!web3Auth || !provider) {
@@ -305,6 +304,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       uiConsole("web3auth not initialized yet");
       return;
     }
+
     const user = torusPlugin?.torusWalletInstance.showWallet("discover", {
       url,
     });
@@ -335,7 +335,8 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       uiConsole("provider not initialized yet");
       return;
     }
-    provider.getBalance();
+    return provider.getBalance();
+    // provider.getBalance();
   };
 
   const signMessage = async () => {
@@ -370,9 +371,9 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
     login,
     logout,
     getUserInfo,
-    isConnected,
     getAccounts,
     getBalance,
+    isConnected,
     signMessage,
     signV4Message,
     showTopup,
@@ -381,7 +382,6 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
     getWallets,
     torusPlugin,
     isConnecting,
-    ADAPTER_EVENTS,
     // showWalletConnectScanner,
   };
   return (

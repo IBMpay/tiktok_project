@@ -66,7 +66,7 @@ const Profile = () => {
   console.log(influencerId);
   useEffect(() => {
     const init = async () => {
-      if (!isConnected && provider) router.push("/login");
+      // if (!isConnected && !isConnecting) router.push("/login");
       if (influencerId && provider) {
         try {
           setPath(router.asPath);
@@ -108,8 +108,11 @@ const Profile = () => {
             console.log(userData);
             setUsername(influencerUsername);
             setDescription(userData.bioDescription);
-            setFollowersCount(userData.followerCount);
-            setFollowingCount(userData.followingCount);
+            if (userData.followerCount)
+              setFollowersCount(userData.followerCount);
+
+            if (userData.followingCount)
+              setFollowingCount(userData.followingCount);
             setAvatarUrl(userData.avatarUrl);
             setWalletAddress(userData.wallet);
             setFullName(userData.name);
@@ -198,7 +201,7 @@ const Profile = () => {
               <div className="grid md:grid-cols-3 lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
                 {isInfluencer && (
                   <Link href="/dashboard/create">
-                    <div className=" rounded-xl overflow-hidden hover:border-[#635BFF] text-gray-600 drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300 h-full flex items-center justify-center bg-gray-200 border-2 border-gray-200">
+                    <div className=" rounded-xl overflow-hidden min-h-72 hover:border-[#635BFF] py-10 text-gray-600 drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300 h-full flex items-center justify-center bg-gray-200 border-2 border-gray-200">
                       <div className="flex flex-col justify-center items-center">
                         <PlusCircleIcon className="h-20 w-20" />
                         <p className="text-2xl font-bold">Create an NFT</p>

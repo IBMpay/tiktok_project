@@ -102,12 +102,14 @@ const Profile = () => {
     getWallets,
     isConnected,
     signMessage,
+    web3Auth,
     signV4Message,
   } = useWeb3Auth();
   const router = useRouter();
   useEffect(() => {
     const init = async () => {
-      if (!isConnected && provider) router.push("/login");
+      console.log("provider", web3Auth);
+
       if (provider) {
         try {
           const user = await getUser();
@@ -138,7 +140,12 @@ const Profile = () => {
     };
     init();
   }, [provider]);
-
+  // useEffect(() => {
+  //   const init = async () => {
+  //     if (!isConnected && !isConnecting) router.push("/login");
+  //   };
+  //   init();
+  // }, [provider, isConnected, isConnecting]);
   const updateUser = async () => {
     try {
       setLoading(true);

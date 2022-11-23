@@ -154,8 +154,8 @@ const Create = () => {
 
   useEffect(() => {
     const init = async () => {
+      // if (!isConnected && !isConnecting) router.push("/login");
       if (provider) {
-        if (!isConnected) router.push("/login");
         const address = await getWallets();
         console.log("add: ", address);
         setCreator(address[0]);
@@ -176,11 +176,11 @@ const Create = () => {
       console.log("something to upload", {
         media_url: videoUrl,
         media_type: mediaType,
-        external_url: postUrl,
+        external_url: "http://ayoo.site",
         title: title,
         royalties: royalties,
-        onwer: creator,
-        price: price,
+        owner: creator,
+        description: description,
       });
       setMyUserName(username);
       const response = await fetch("https://ayoo-arweave.herokuapp.com/", {
@@ -191,8 +191,8 @@ const Create = () => {
           external_url: "http://ayoo.site",
           title: title,
           royalties: royalties,
-          onwer: creator,
-          price: price,
+          owner: creator,
+          description: description,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -235,6 +235,9 @@ const Create = () => {
         setCreatedCollectibleId(seed.toString());
         setModalOpen(true);
         // setOpen(true);
+      } else {
+        setSnackbarMessage("Please try again!");
+        setOpen(true);
       }
     } catch (error) {
       console.log(error);

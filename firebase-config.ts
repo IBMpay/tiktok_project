@@ -7,12 +7,12 @@ import { getStorage } from "@firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDhInbfrTJLiQP1k7YLcvewQiDn8oaZbW4",
-  authDomain: "tiktok-blockchain.firebaseapp.com",
-  projectId: "tiktok-blockchain",
-  storageBucket: "tiktok-blockchain.appspot.com",
-  messagingSenderId: "270239591727",
-  appId: "1:270239591727:web:581e1653c8b20d543205da",
+  apiKey: "AIzaSyBB3CN_HBF920CHczQfJ-C-EgzOGO7NTtU",
+  authDomain: "ayoo-a92aa.firebaseapp.com",
+  projectId: "ayoo-a92aa",
+  storageBucket: "ayoo-a92aa.appspot.com",
+  messagingSenderId: "365489756515",
+  appId: "1:365489756515:web:0871cf035c04724d3a9b56",
 };
 
 // Initialize Firebase

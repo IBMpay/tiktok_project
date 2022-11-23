@@ -81,8 +81,8 @@ function Dashboard() {
   } = useWeb3Auth();
   useEffect(() => {
     const getAddress = async () => {
+      // if (!isConnected && !isConnecting) router.push("/login");
       if (provider) {
-        if (!isConnected) router.push("/login");
         const user = await getUser();
         const username = user.email.split("@", 1)[0];
         const userRef = doc(db, "users", username);

@@ -1,9 +1,18 @@
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useWeb3Auth } from "../services/web3auth";
 
 function Header() {
-  const { logout } = useWeb3Auth();
+  const { logout, getUser, provider } = useWeb3Auth();
+  const [userName, setUserName] = useState<string>();
+  useEffect(() => {
+    const init = async () => {
+      const user = await getUser();
+      const username = user.email.split("@", 1)[0].replace(".", "");
+      setUserName(username);
+    };
+    init();
+  }, [provider]);
   return (
     <div>
       <div className="flex py-4 border-b border-gray-200 justify-between">
@@ -32,7 +41,7 @@ function Header() {
           </div>
         </div>
         <div className="flex">
-          <Link href="/pages/promehdioh">
+          <Link href={`/pages/${userName}`}>
             <p className="capitalize font-semibold mr-3 cursor-pointer hover:text-[#635BFF]">
               Visit page
             </p>
