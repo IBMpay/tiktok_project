@@ -30,10 +30,10 @@ function Header() {
   return (
     <div className="mb-10">
       <div
-        className=" fixed top-0 left-0 right-0 px-8 hidden md:block"
+        className=" fixed top-0 left-0 right-0 hidden md:block"
         style={{ zIndex: 100000 }}
       >
-        <div className="flex py-4 border-b border-gray-200 bg-white justify-between">
+        <div className="flex py-4 border-b  px-8  border-gray-200 bg-white justify-between">
           <div className="flex">
             <div className="cursor-pointer">
               <Link href="/dashboard">
