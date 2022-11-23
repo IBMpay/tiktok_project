@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { useWeb3Auth } from "../services/web3auth";
 import Button from "./Button";
 
-function LoginSection({ login }) {
+function LoginSection() {
   const { provider, web3Auth } = useWeb3Auth();
   const router = useRouter();
   useEffect(() => {

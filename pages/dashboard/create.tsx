@@ -267,9 +267,9 @@ const Create = () => {
               </h1>
               {reviewMode && (
                 <p className="mt-2 text-center  text-sm text-gray-700">
-                  Double check these details - there's no free way to edit or{" "}
-                  <br />
-                  delete and NFT once it's uploaded on-chain
+                  Double check these details - there&apos;s no free way to edit
+                  or <br />
+                  delete and NFT once it&apos;s uploaded on-chain
                 </p>
               )}
             </div>
@@ -394,7 +394,10 @@ const Create = () => {
                         .replace(/ +/g, "")
                         .split(",")
                         .map((hashtag, i) => (
-                          <span className="mr-2 cursor-pointer text-[#00B2FF] font-semibold">
+                          <span
+                            key={i}
+                            className="mr-2 cursor-pointer text-[#00B2FF] font-semibold"
+                          >
                             #{hashtag}
                           </span>
                         ))}

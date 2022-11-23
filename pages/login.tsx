@@ -4,7 +4,7 @@ import Loader from "../components/loader";
 import LoginSection from "../components/loginSection";
 import { useWeb3Auth } from "../services/web3auth";
 
-function login() {
+function Login() {
   const { provider, isConnecting, login, isConnected } = useWeb3Auth();
   // useEffect(() => {
   //   if (provider) router.push("/dashboard/profile");
@@ -15,7 +15,7 @@ function login() {
   }, [provider]);
 
   // return <LoginSection login={login} />;
-  return <>{!isConnecting ? <LoginSection login={login} /> : <Loader />}</>;
+  return <>{!isConnecting ? <LoginSection /> : <Loader />}</>;
 }
 
-export default login;
+export default Login;
