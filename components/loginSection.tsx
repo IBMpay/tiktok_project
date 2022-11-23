@@ -1,13 +1,16 @@
+import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { useWeb3Auth } from "../services/web3auth";
 import Button from "./Button";
 
 function LoginSection({ login }) {
   const { provider, web3Auth } = useWeb3Auth();
+  const router = useRouter();
   useEffect(() => {
     const init = async () => {
       try {
         await web3Auth.connect();
+        // router.push("/dashboard/profile");
       } catch (error) {
         console.log(error);
       }

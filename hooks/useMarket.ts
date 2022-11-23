@@ -167,7 +167,12 @@ export const useMarket = () => {
     return [escrow, bump];
   };
 
-  const mintNft = async (title: string, uri: string, price: number) => {
+  const mintNft = async (
+    title: string,
+    uri: string,
+    price: number,
+    creator: string
+  ) => {
     if (program && anchorWallet) {
       console.log("the price", price);
       console.log("the uri", uri);
@@ -181,9 +186,7 @@ export const useMarket = () => {
         const creatorKeypair: anchor.web3.Keypair =
           anchor.web3.Keypair.generate();
         // anchor.web3.Keypair.fromSecretKey
-        const treasuryAddress = new anchor.web3.PublicKey(
-          "2zzfJ4AtuhjiFf9CoopizwjcDaK2oARiRfKTTRC3b8vH"
-        );
+        const treasuryAddress = new anchor.web3.PublicKey(creator);
         const usdcMintAddress = new anchor.web3.PublicKey(
           "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
         );

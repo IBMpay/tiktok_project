@@ -2,15 +2,13 @@ import Link from "next/link";
 import React from "react";
 import { useMarket } from "../hooks/useMarket";
 
-function NFTPostItem({
+function NFTPostCollected({
   video,
   title,
-  id,
   baseLink,
+  id,
   price,
   type,
-  lastSalePrice,
-  description,
   provider,
 }) {
   return (
@@ -26,7 +24,6 @@ function NFTPostItem({
             ) : (
               <video width="620" height="620">
                 <source src={video} type="video/mp4" />
-                {description}
               </video>
             )}
           </div>
@@ -45,20 +42,6 @@ function NFTPostItem({
                   />
                 </p>
               </div>
-              {lastSalePrice && (
-                <div className="mt-2">
-                  <p className=" text-gray-600 text-xs flex">
-                    <span className="text-gray-500">last sale:</span>
-                    <span className="font-bold ml-1 text-black">
-                      ${lastSalePrice}
-                    </span>
-                    <img className="w-4 h-4 ml-1" src="/assets/usdc.webp" />
-                  </p>
-                  {/* <p className="font-bold uppercase text-[#5453CF]">
-                    ${lastSalePrice} usdc
-                  </p> */}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -67,4 +50,4 @@ function NFTPostItem({
   );
 }
 
-export default NFTPostItem;
+export default NFTPostCollected;

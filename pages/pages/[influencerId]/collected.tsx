@@ -25,6 +25,7 @@ import { truncate } from "../../../utils/string";
 import Header from "../../../components/Header";
 import Link from "next/link";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import NFTPostCollected from "../../../components/NFTPostCollected";
 
 const Profile = () => {
   const router = useRouter();
@@ -54,7 +55,6 @@ const Profile = () => {
   const [description, setDescription] = useState<string>("");
   const [followersCount, setFollowersCount] = useState<number>(0);
   const [followingCount, setFollowingCount] = useState<number>(0);
-  const [collectibles, setCollectibles] = useState([]);
   const [collected, setCollected] = useState([]);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [fullName, setFullName] = useState<string>("");
@@ -69,7 +69,7 @@ const Profile = () => {
       if (!isConnected && provider) router.push("/login");
       if (influencerId && provider) {
         try {
-          setPath(router.asPath);
+          setPath(`/pages/${influencerId}`);
           console.log("the pubki: ", connection);
           const influencerUsername = influencerId.toString();
           console.log(influencerUsername);
@@ -78,19 +78,6 @@ const Profile = () => {
 
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
-            const collectiblesRef = collection(
-              usersRef,
-              influencerUsername,
-              "collectibles"
-            );
-            const collectiblesSnap = await getDocs(collectiblesRef);
-            const collectiblesData = collectiblesSnap.docs.map((doc) => ({
-              ...doc.data(),
-              id: doc.id,
-            }));
-            console.log(collectiblesData);
-            setCollectibles(collectiblesData);
-
             const collectedRef = collection(
               usersRef,
               influencerUsername,
@@ -186,38 +173,26 @@ const Profile = () => {
               <div className=" mb-6">
                 <div className="flex justify-center">
                   <div className="flex">
-                    <p className="px-4 py-2 font-bold border-b border-black">
-                      Created
-                    </p>
-                    <Link href={`${path}/collected`}>
-                      <p className="px-4 py-2 cursor-pointer">Collected</p>
+                    <Link href={`${path}/`}>
+                      <p className="px-4 py-2 cursor-pointer">Created</p>
                     </Link>
+                    <p className="px-4 py-2 font-bold border-b border-black">
+                      Collected
+                    </p>
                   </div>
                 </div>
               </div>
               <div className="grid md:grid-cols-3 lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
-                {isInfluencer && (
-                  <Link href="/dashboard/create">
-                    <div className=" rounded-xl overflow-hidden hover:border-[#635BFF] text-gray-600 drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300 h-full flex items-center justify-center bg-gray-200 border-2 border-gray-200">
-                      <div className="flex flex-col justify-center items-center">
-                        <PlusCircleIcon className="h-20 w-20" />
-                        <p className="text-2xl font-bold">Create an NFT</p>
-                      </div>
-                    </div>
-                  </Link>
-                )}
-                {collectibles.map((nft, i) => (
-                  <NFTPostItem
+                {collected.map((nft, i) => (
+                  <NFTPostCollected
                     key={i}
                     id={nft.id}
-                    type={nft.mediaType}
-                    lastSalePrice={nft.lastSalePrice || null}
                     baseLink={path}
-                    video={nft.videoUrl}
+                    video={nft.media}
                     title={nft.title}
-                    price={+nft.price}
-                    description={nft.description}
+                    price={+nft.buyPrice}
                     provider={provider}
+                    type={nft.mediaType}
                   />
                 ))}
               </div>

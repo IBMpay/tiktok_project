@@ -16,6 +16,7 @@ import { WEB3AUTH_NETWORK_TYPE } from "../config/web3AuthNetwork";
 import { getWalletProvider, IWalletProvider } from "./walletProvider";
 import { doc, getDoc, setDoc } from "@firebase/firestore";
 import { db } from "../firebase-config";
+import { useRouter } from "next/router";
 export interface IWeb3AuthContext {
   web3Auth: Web3Auth | null;
   provider: IWalletProvider | null;
@@ -35,6 +36,7 @@ export interface IWeb3AuthContext {
   getWallets: () => Promise<any>;
   torusPlugin: any;
   isConnecting: boolean;
+  isConnected: boolean;
 }
 
 export const Web3AuthContext = createContext<IWeb3AuthContext>({
@@ -56,6 +58,7 @@ export const Web3AuthContext = createContext<IWeb3AuthContext>({
   getWallets: async () => {},
   torusPlugin: null,
   isConnecting: true,
+  isConnected: false,
 });
 
 export function useWeb3Auth() {
@@ -80,11 +83,12 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
 }: IWeb3AuthProps) => {
   const [web3Auth, setWeb3Auth] = useState<Web3Auth | null>(null);
   const [torusPlugin, setTorusPlugin] = useState<any | null>(null);
-
+  const router = useRouter();
   const [provider, setProvider] = useState<IWalletProvider | null>(null);
   const [user, setUser] = useState<unknown | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isConnecting, setIsConnecting] = useState<boolean>(true);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const setWalletProvider = useCallback(
     (web3authProvider: SafeEventEmitterProvider) => {
       const walletProvider = getWalletProvider(
@@ -100,21 +104,31 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
   useEffect(() => {
     const subscribeAuthEvents = (web3auth: Web3Auth, torusPlugin: any) => {
       // Can subscribe to all ADAPTER_EVENTS and LOGIN_MODAL_EVENTS
-      web3auth.on(ADAPTER_EVENTS.CONNECTED, (data: unknown) => {
+      web3auth.on(ADAPTER_EVENTS.CONNECTED, (data: any) => {
         console.log("Yeah!, you are successfully logged in", data);
+        if (data.reconnected == false) {
+          router.push("/dashboard/profile");
+        }
         setUser(data);
-        setIsConnecting(false);
+        // setIsConnecting(false);
+        setIsLoading(false);
         setWalletProvider(web3auth?.provider as SafeEventEmitterProvider);
+        setIsConnecting(false);
+        setIsConnected(true);
       });
 
       web3auth.on(ADAPTER_EVENTS.CONNECTING, () => {
         console.log("connecting");
-        setIsConnecting(true);
+        // setIsLoading(false);
+        // setIsConnected(true);
+        // setIsConnecting(true);
       });
 
       web3auth.on(ADAPTER_EVENTS.DISCONNECTED, () => {
         console.log("disconnected");
+        setIsLoading(false);
         setUser(null);
+        router.push("/login");
       });
 
       web3auth.on(ADAPTER_EVENTS.ERRORED, (error: unknown) => {
@@ -126,7 +140,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
 
     async function init() {
       try {
-        setIsLoading(true);
+        // setIsLoading(true);
         const clientId =
           "BOjke_VdSeEjE5Gap8t4hfg_1QRymSFuTYxklhGttI-6H-ZJARwiLQunE9PYrl9xyxwNerQQT6u01uDP744_mM8";
         const web3AuthInstance = new Web3Auth({
@@ -179,7 +193,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       } catch (error) {
         console.error(error);
       } finally {
-        setIsLoading(false);
+        // setIsLoading(false);
         setIsConnecting(false);
       }
     }
@@ -188,17 +202,13 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
 
   useEffect(() => {
     const init = async () => {
-      console.log("here 1");
       if (provider && web3Auth) {
         try {
           const user = await web3Auth.getUserInfo();
-          console.log("here 2", user);
           const wallets = await provider.getAccounts();
-          console.log("here 3");
           const username = user.email.split("@", 1)[0].replace(".", "");
           // console.log(username);
           const userRef = doc(db, "users", username);
-          console.log("user ref: ", userRef);
           const userSnap = await getDoc(userRef);
           console.log(userSnap);
 
@@ -236,6 +246,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       return;
     }
     await web3Auth.logout();
+    router.push("/login");
     setProvider(null);
   };
 
@@ -265,11 +276,17 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       uiConsole("web3auth not initialized yet");
       return;
     }
-    const accounts = await provider.getAccounts();
-    const user = await torusPlugin?.initiateTopup("moonpay", {
-      selectedAddress: accounts[0],
-    });
-    uiConsole(user);
+    try {
+      const accounts = await provider.getAccounts();
+
+      const user = await torusPlugin?.initiateTopup("moonpay", {
+        selectedAddress: accounts[0],
+      });
+      console.log(user);
+      uiConsole(user);
+    } catch (error) {
+      console.log(error);
+    }
   };
   // const showWalletConnectScanner = async () => {
   //   if (!web3Auth || !provider) {
@@ -286,6 +303,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       uiConsole("web3auth not initialized yet");
       return;
     }
+
     const user = torusPlugin?.torusWalletInstance.showWallet("discover", {
       url,
     });
@@ -316,7 +334,8 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       uiConsole("provider not initialized yet");
       return;
     }
-    provider.getBalance();
+    return provider.getBalance();
+    // provider.getBalance();
   };
 
   const signMessage = async () => {
@@ -353,6 +372,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
     getUserInfo,
     getAccounts,
     getBalance,
+    isConnected,
     signMessage,
     signV4Message,
     showTopup,

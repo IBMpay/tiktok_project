@@ -7,6 +7,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  where,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -25,6 +26,8 @@ import LoginSection from "../../../components/loginSection";
 import Loader from "../../../components/loader";
 import { truncate } from "../../../utils/string";
 import NFTPostItem from "../../../components/NFTPostItem";
+import Header from "../../../components/Header";
+import { Web3Auth } from "@web3auth/web3auth";
 const Grifter = () => {
   const router = useRouter();
   const { influencerId, collectibleId } = router.query;
@@ -38,8 +41,10 @@ const Grifter = () => {
     getUserInfo,
     getAccounts,
     getBalance,
+    web3Auth,
     signMessage,
     user,
+    isConnected,
     getUser,
     isConnecting,
     signV4Message,
@@ -65,14 +70,18 @@ const Grifter = () => {
   const [lastSalePrice, setLastSalePrice] = useState<string>("");
   const [relatedItems, setRelatedItems] = useState([]);
   const [path, setPath] = useState<string>("");
+  const [mediaType, setMediaType] = useState<string>("");
+  const [modalMessage, setModalMessage] = useState<string>("");
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-
+  // const router = useRouter();
   const { mintNft, listNft, delistNft, buyNft, transactionPending } =
     useMarket();
   useEffect(() => {
     const init = async () => {
+      if (!isConnected && provider) router.push("/login");
+
       if (influencerId && collectibleId && provider) {
         try {
           setPath(router.asPath);
@@ -136,7 +145,7 @@ const Grifter = () => {
           if (userSnap.exists()) {
             const collectiblesSnap = await getDoc(collectibleRef);
             const collectiblesData = collectiblesSnap.data();
-
+            setMediaType(collectiblesData.mediaType);
             setTitle(collectiblesData.title);
             setDesc(collectiblesData.description);
             setStatus(collectiblesData.status);
@@ -172,7 +181,12 @@ const Grifter = () => {
       // );
       // const mintAddress = "As9pKmGg6yTugSgfonnig6UVRPZigZbMEr24YGcyCbZq";
       setLoadingProcess(false);
-      const mintAddress = await mintNft(title, metadataUri, price);
+      const mintAddress = await mintNft(
+        title,
+        metadataUri,
+        price,
+        influencerWallet
+      );
       const user = await getUser();
       const username = user.email.split("@", 1)[0].replace(".", "");
       console.log(username);
@@ -215,8 +229,26 @@ const Grifter = () => {
         timestamp: serverTimestamp(),
         price: (price / 1_000_000).toString(),
       });
-      setMintAddr(mintAddress);
 
+      const collectedRef = doc(
+        db,
+        "users",
+        username,
+        "collected",
+        collectibleId.toString()
+      );
+      await setDoc(collectedRef, {
+        id: collectibleId,
+        media: mediaUrl,
+        title,
+        buyTimestamp: serverTimestamp(),
+        creator: artist,
+        buyPrice: (price / 1_000_000).toString(),
+        mediaType,
+        active: true,
+      });
+      setMintAddr(mintAddress);
+      setModalMessage("Your NFT has been minted successfully!");
       setOpen(true);
       // console.log("token ", mintAddress, " has been minted--");
     } catch (error) {
@@ -285,8 +317,19 @@ const Grifter = () => {
           timestamp: serverTimestamp(),
           price: listPrice,
         });
+        const collectedRef = doc(
+          db,
+          "users",
+          username,
+          "collected",
+          collectibleId.toString()
+        );
+        await updateDoc(collectedRef, {
+          active: false,
+        });
       }
-
+      setModalMessage("Your NFT has been listed successfully!");
+      setOpen(true);
       // console.log("token ", mintAddress, " has been minted--");
     } catch (error) {
       console.log(error);
@@ -346,8 +389,19 @@ const Grifter = () => {
           mint: mintAddr,
           timestamp: serverTimestamp(),
         });
+        const collectedRef = doc(
+          db,
+          "users",
+          username,
+          "collected",
+          collectibleId.toString()
+        );
+        await updateDoc(collectedRef, {
+          active: true,
+        });
       }
-
+      setModalMessage("Your NFT has been delisted successfully!");
+      setOpen(true);
       // console.log("token ", mintAddress, " has been minted--");
     } catch (error) {
       console.log(error);
@@ -417,8 +471,34 @@ const Grifter = () => {
           mint: mintAddr,
           timestamp: serverTimestamp(),
         });
+        const collectedRef = doc(
+          db,
+          "users",
+          username,
+          "collected",
+          collectibleId.toString()
+        );
+        const collectedSnap = await getDoc(collectedRef);
+        if (collectedSnap.exists()) {
+          await updateDoc(collectedRef, {
+            buyPrice: lastPrice.toString(),
+            active: true,
+          });
+        } else {
+          await setDoc(collectedRef, {
+            id: collectibleId,
+            media: mediaUrl,
+            title,
+            creator: artist,
+            buyTimestamp: serverTimestamp(),
+            buyPrice: lastPrice.toString(),
+            mediaType,
+            active: true,
+          });
+        }
       }
-
+      setModalMessage("Your NFT has been bought successfully!");
+      setOpen(true);
       // console.log("token ", mintAddress, " has been minted--");
     } catch (error) {
       console.log(error);
@@ -429,118 +509,136 @@ const Grifter = () => {
 
   return (
     <>
-      {!isConnecting ? (
-        provider ? (
-          <Container>
-            <div className="md:flex mt-40">
-              <div className="md:w-2/4">
-                {/* <img src={"/assets/MakeOfferImg.png"} className="rounded-xl" alt="" /> */}
-                <div className="rounded-xl overflow-hidden mb-8">
+      {!isConnecting /* 
+        provider ? ( */ ? (
+        <Container>
+          <Header />
+          <div className="md:flex mt-20">
+            <div className="md:w-2/4">
+              {/* <img src={"/assets/MakeOfferImg.png"} className="rounded-xl" alt="" /> */}
+              <div className="rounded-xl overflow-hidden mb-8">
+                {mediaType !== "video/mp4" &&
+                mediaType !== "video/ogg" &&
+                mediaType !== "video/webm" ? (
+                  <img src={mediaUrl} />
+                ) : (
                   <video width="620" height="620" controls>
                     <source src={mediaUrl} type="video/mp4" />
+                    some
                   </video>
-                </div>
-                <div className="mt-6">
-                  <h1 className="font-bold text-xl">Description</h1>
-                  <p className="text-gray-500 text-sm mt-2">{desc}</p>
-                </div>
-                <div className="mt-6">
-                  <h1 className="font-bold text-xl">Details</h1>
-                  <div className="rounded-xl mt-4 border-1 border border-black p-6">
-                    <div className="flex justify-between">
-                      <p>Contract address</p>
-                      <p className="justify-end">
-                        <a
-                          href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
-                        >
-                          {truncate(mintAddr)}
-                        </a>
-                      </p>
-                    </div>
-                    <div className="flex justify-between">
-                      <p>Blockchain</p>
-                      <p className="justify-end">
-                        <a href="">Solana</a>
-                      </p>
-                    </div>
-                    <div className="flex justify-between">
-                      <p>Token Standard</p>
-                      <p className="justify-end">
-                        <a href="">Solana</a>
-                      </p>
-                    </div>
+                )}
+              </div>
+              <div className="mt-6">
+                <h1 className="font-bold text-xl">Description</h1>
+                <p className="text-gray-500 text-sm mt-2">{desc}</p>
+              </div>
+              <div className="mt-6">
+                <h1 className="font-bold text-xl">Details</h1>
+                <div className="rounded-xl mt-4 border-1 border border-black p-6">
+                  <div className="flex justify-between">
+                    <p>Contract address</p>
+                    <p className="justify-end">
+                      <a
+                        href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
+                      >
+                        {truncate(mintAddr)}
+                      </a>
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p>Blockchain</p>
+                    <p className="justify-end">
+                      <a href="">Solana</a>
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p>Token Standard</p>
+                    <p className="justify-end">
+                      <a href="">Solana</a>
+                    </p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="mt-0 md:ml-20 md:w-2/4">
-                <div className="flex gap-2 mb-3">
-                  <button className="text-center text-gray-500 px-6 py-1 border border-1 hover:bg-[#635BFF] border-gray-500 rounded-md  hover:text-white">
-                    Follow
-                  </button>
-                  <button className="text-center text-gray-500 px-6 py-1 border border-1 border-gray-500 rounded-md hover:bg-[#635BFF] hover:text-white">
-                    Share
-                  </button>
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold">{title}</h1>
-                  <div className="flex py-4 border-b-2">
+            <div className="mt-0 md:ml-20 md:w-2/4">
+              <div className="flex gap-2 mb-3">
+                <button className="text-center text-gray-500 px-6 py-1 border border-1 hover:bg-[#635BFF] border-gray-500 rounded-md  hover:text-white">
+                  Follow
+                </button>
+                <button className="text-center text-gray-500 px-6 py-1 border border-1 border-gray-500 rounded-md hover:bg-[#635BFF] hover:text-white">
+                  Share
+                </button>
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold">{title}</h1>
+                <div className="flex py-4 border-b-2">
+                  <div className="flex mr-6 items-center">
+                    <img
+                      src={"/assets/Ellips.png"}
+                      className="h-8 w-8"
+                      alt=""
+                    />
+
+                    <p className="ml-2 font-semibold">
+                      Artist <Link href={`/pages/${artist}`}>{artist}</Link>
+                    </p>
+                  </div>
+
+                  {status !== "offchain" && (
                     <div className="flex mr-6 items-center">
                       <img
                         src={"/assets/Ellips.png"}
                         className="h-8 w-8"
                         alt=""
                       />
-
                       <p className="ml-2 font-semibold">
-                        Artist <Link href={`/pages/${artist}`}>{artist}</Link>
+                        Owner <Link href={`/pages/${owner}`}>{owner}</Link>
                       </p>
-                    </div>
-
-                    {status !== "offchain" && (
-                      <div className="flex mr-6 items-center">
-                        <img
-                          src={"/assets/Ellips.png"}
-                          className="h-8 w-8"
-                          alt=""
-                        />
-                        <p className="ml-2 font-semibold">
-                          Owner <Link href={`/pages/${owner}`}>{owner}</Link>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-3">
-                    {" "}
-                    <div className="w-full bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-700">Price</p>
-                      <h3 className="text-black font-bold text-lg">
-                        ${currentPrice} USDC
-                      </h3>
-                      <p className="text-sm text-gray-700">
-                        Last sale price {lastSalePrice} USDC
-                      </p>
-                    </div>
-                  </div>
-                  {loadingProcess && (
-                    <div className="my-2 flex justify-center">
-                      <div className="circle-spinner">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                      </div>
                     </div>
                   )}
-
+                </div>
+                {loadingProcess && (
+                  <div className="my-2 flex justify-center">
+                    <div className="circle-spinner">
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-3 p-5 border border-gray-200 rounded-xl">
+                  {" "}
+                  <div className="w-full bg-gray-50 rounded-xl p-4">
+                    <p className="text-gray-700">Price</p>
+                    <h3 className="text-black font-bold flex text-lg">
+                      <span>${currentPrice}</span>{" "}
+                      <img
+                        src="/assets/usdc.webp"
+                        className="w-5 h-5 mt-1 ml-1"
+                      />
+                    </h3>
+                  </div>
+                  <div className="my-2 ">
+                    {lastSalePrice && (
+                      <p className="text-sm text text-center font-semibold justify-center flex">
+                        Last sale price ${lastSalePrice}{" "}
+                        <img
+                          src="/assets/usdc.webp"
+                          className="w-4 h-4 mt-1 ml-1"
+                        />
+                      </p>
+                    )}
+                  </div>
                   {status === "offchain" && (
                     <button
                       className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
@@ -555,7 +653,7 @@ const Grifter = () => {
                         type="text"
                         value={listPrice}
                         placeholder="Price here"
-                        className="w-full p-4 rounded-lg my-3 border border-gray-300"
+                        className="w-full p-2 pl-4 rounded-lg my-3 border border-gray-300"
                         onChange={(e) => setListPrice(e.target.value)}
                       />
                       <button
@@ -583,167 +681,178 @@ const Grifter = () => {
                     </button>
                   )}
                 </div>
+              </div>
 
-                <div className="mt-6">
-                  <h1 className="font-bold text-xl">History</h1>
-                  <div className="mt-4 max-h-96 overflow-y-scroll">
-                    {transactions.map((transaction, i) => (
-                      <>
-                        {transaction.type === "list" && (
-                          <div className="flex items-center mb-3" key={i}>
-                            <div className="mr-4">
-                              <img src="/assets/ellips.png" />
-                            </div>
-                            <div className=" text-md">
-                              {transaction.from} listed the token for{" "}
-                              {transaction.price}
-                              usdc
-                              <p className="text-xs text-gray-500 mt-1">
-                                {dateFormat(
-                                  transaction.timestamp.toDate(),
-                                  "dddd, mmmm dS, yyyy, h:MM:ss TT"
-                                )}
-                              </p>
-                            </div>
+              <div className="mt-6">
+                <h1 className="font-bold text-xl">History</h1>
+                <div className="mt-4 max-h-96 overflow-y-scroll">
+                  {transactions.map((transaction, i) => (
+                    <>
+                      {transaction.type === "list" && (
+                        <div className="flex items-center mb-3" key={i}>
+                          <div className="mr-4">
+                            <img src="/assets/ellips.png" />
                           </div>
-                        )}
-                        {transaction.type === "mint" && (
-                          <div className="flex items-center mb-3" key={i}>
-                            <div className="mr-4">
-                              <img src="/assets/ellips.png" />
-                            </div>
-                            <div className=" text-md">
-                              {transaction.from} minted the token
-                              <p className="text-xs text-gray-500 mt-1">
-                                {dateFormat(
-                                  transaction.timestamp.toDate(),
-                                  "dddd, mmmm dS, yyyy, h:MM:ss TT"
-                                )}
-                              </p>
-                            </div>
+                          <div className=" text-md">
+                            {transaction.from} listed the token for{" "}
+                            {transaction.price}
+                            usdc
+                            <p className="text-xs text-gray-500 mt-1">
+                              {dateFormat(
+                                transaction.timestamp.toDate(),
+                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                              )}
+                            </p>
                           </div>
-                        )}
-                        {transaction.type === "delist" && (
-                          <div className="flex items-center mb-3" key={i}>
-                            <div className="mr-4">
-                              <img src="/assets/ellips.png" />
-                            </div>
-                            <div className=" text-md">
-                              {transaction.from} delisted the token
-                              <p className="text-xs text-gray-500 mt-1">
-                                {dateFormat(
-                                  transaction.timestamp.toDate(),
-                                  "dddd, mmmm dS, yyyy, h:MM:ss TT"
-                                )}
-                              </p>
-                            </div>
+                        </div>
+                      )}
+                      {transaction.type === "mint" && (
+                        <div className="flex items-center mb-3" key={i}>
+                          <div className="mr-4">
+                            <img src="/assets/ellips.png" />
                           </div>
-                        )}
-                      </>
-                    ))}
-                  </div>
+                          <div className=" text-md">
+                            {transaction.from} minted the token
+                            <p className="text-xs text-gray-500 mt-1">
+                              {dateFormat(
+                                transaction.timestamp.toDate(),
+                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {transaction.type === "delist" && (
+                        <div className="flex items-center mb-3" key={i}>
+                          <div className="mr-4">
+                            <img src="/assets/ellips.png" />
+                          </div>
+                          <div className=" text-md">
+                            {transaction.from} delisted the token
+                            <p className="text-xs text-gray-500 mt-1">
+                              {dateFormat(
+                                transaction.timestamp.toDate(),
+                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ))}
                 </div>
-                <div className="mt-6">
-                  <h1 className="font-bold text-xl">Tags</h1>
-                  <div className="flex mt-4">
-                    <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                      green
-                    </span>
-                    <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                      blue
-                    </span>
-                    <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                      yellow
-                    </span>
-                    <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                      orange
-                    </span>
-                  </div>
+              </div>
+              <div className="mt-6">
+                <h1 className="font-bold text-xl">Tags</h1>
+                <div className="flex mt-4">
+                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
+                    green
+                  </span>
+                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
+                    blue
+                  </span>
+                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
+                    yellow
+                  </span>
+                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
+                    orange
+                  </span>
                 </div>
               </div>
             </div>
-            <Modal
-              open={open}
-              onClose={handleClose}
-              aria-labelledby="modal-modal-title"
-              aria-describedby="modal-modal-description"
-            >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white drop-shadow-xl rounded-3xl p-4">
-                <div className="relative -top-12 px-8">
-                  <div className="flex justify-center ">
+          </div>
+          <Modal
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white drop-shadow-xl rounded-3xl p-4">
+              <div className="relative -top-12 px-8">
+                <div className="flex justify-center ">
+                  {mediaType === "video/mp4" ? (
+                    <div className="flex justify-center relative -top-6">
+                      <video
+                        width="128"
+                        height="128"
+                        className="h-32 w-32 rounded-xl justify-centers"
+                      >
+                        <source src={mediaUrl} type="video/mp4" />
+                        sample
+                      </video>
+                    </div>
+                  ) : (
                     <img
-                      src="/assets/Rectangle228.png"
                       className="h-32 w-32 rounded-xl justify-centers"
+                      src={mediaUrl}
                     />
-                  </div>
+                  )}
+                </div>
 
-                  <div className="mt-4">
-                    <h1 className="capitalize text-3xl font-bold text-center">
-                      congratulations!
-                    </h1>
-                    <p className="text-center  mt-2">you minted an NFT.</p>
-                  </div>
-                  <div className="grid grid-rows-1 mb-6">
-                    <a
-                      href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
-                      className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold text-center"
-                    >
-                      View NFT
-                    </a>
-                  </div>
-                  <div className="relative mb-4">
-                    <div className="absolute border-t border-black w-full"></div>
-                    <p className="text-center relative -top-3">
-                      <span className="bg-white px-2 font-semibold">or</span>
-                    </p>
-                    <p className="text-center text-sm text-gray-700 font-bold">
-                      More you can do
-                    </p>
-                  </div>
-                  <div className="grid grid-rows-3 gap-2">
-                    <button className="py-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
-                      Share your NFT
-                    </button>
-                    <button className="py-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
-                      Edit Profile
-                    </button>
-                    <button className="py-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
-                      Learn tips to sell
-                    </button>
-                  </div>
+                <div className="mt-4">
+                  <h1 className="capitalize text-3xl font-bold text-center">
+                    congratulations!
+                  </h1>
+                  <p className="text-center  mt-2">{modalMessage}</p>
+                </div>
+                <div className="grid grid-rows-1 mb-6 mt-2">
+                  {/* <Link href={`/pages/${influencerId}/${collectibleId}`}> */}
+                  <a
+                    href={`/pages/${influencerId}/${collectibleId}`}
+                    className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold text-center"
+                  >
+                    View NFT
+                  </a>
+                  {/* </Link> */}
+                </div>
+                <div className="relative mb-4">
+                  <div className="absolute border-t border-black w-full"></div>
+                  <p className="text-center relative -top-3">
+                    <span className="bg-white px-2 font-semibold">or</span>
+                  </p>
+                  <p className="text-center text-sm text-gray-700 font-bold">
+                    More you can do
+                  </p>
+                </div>
+                <div className="grid grid-rows-3 gap-2">
+                  <button className="py-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
+                    Share your NFT
+                  </button>
                 </div>
               </div>
-            </Modal>
-            <div className="grid mt-8 md:grid-cols-3 lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
-              {relatedItems.map((nft, i) => (
-                <NFTPostItem
-                  key={i}
-                  id={nft.id}
-                  type={nft.mediaType}
-                  lastSalePrice={nft.lastSalePrice || null}
-                  baseLink={path}
-                  video={nft.videoUrl}
-                  title={nft.title}
-                  price={+nft.price}
-                  description={nft.description}
-                  royalties={+nft.royalties}
-                  status={nft.status}
-                  provider={provider}
-                />
-              ))}
             </div>
-            {/* <div className="ImgFlex">
+          </Modal>
+          <div className="mt-8">
+            <h1 className="font-bold text-xl">More from {influencerId}</h1>
+          </div>
+          <div className="grid mt-8 md:grid-cols-3 lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-6">
+            {relatedItems.map((nft, i) => (
+              <NFTPostItem
+                key={i}
+                id={nft.id}
+                type={nft.mediaType}
+                lastSalePrice={nft.lastSalePrice || null}
+                baseLink={path}
+                video={nft.videoUrl}
+                title={nft.title}
+                price={+nft.price}
+                description={nft.description}
+                provider={provider}
+              />
+            ))}
+          </div>
+          {/* <div className="ImgFlex">
               <img src={"assets/nftimg.png"} alt="" />
               <img src={"assets/nftimg.png"} alt="" />
               <img src={"assets/nftimg.png"} alt="" />
               <img src={"assets/nftimg.png"} alt="" />
               <img src={"assets/nftimg.png"} alt="" />
             </div> */}
-          </Container>
-        ) : (
-          <LoginSection login={login} />
-        )
+        </Container>
       ) : (
+        // ) : (
+        //   <LoginSection login={login} />
+        // )
         <Loader />
       )}
     </>

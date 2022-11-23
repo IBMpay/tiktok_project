@@ -22,6 +22,9 @@ import Button from "../../components/Button";
 import { useMarket } from "../../hooks/useMarket copy";
 import { useWeb3Auth } from "../../services/web3auth";
 import LoginSection from "../../components/loginSection";
+import Loader from "../../components/loader";
+import axios from "axios";
+import Header from "../../components/Header";
 const clientId =
   "BOjke_VdSeEjE5Gap8t4hfg_1QRymSFuTYxklhGttI-6H-ZJARwiLQunE9PYrl9xyxwNerQQT6u01uDP744_mM8"; // get from https://dashboard.web3auth.io
 interface UserData {
@@ -54,9 +57,10 @@ function Dashboard() {
     verifier: "",
     verifierId: "",
   });
+  const [userInfo, setUserInfo] = useState(null);
   const [userAddress, setUserAddress] = useState("");
-  const [balance, setBalance] = useState(0);
-  const [usdcBalance, setUsdcBalance] = useState(0);
+  const [balance, setBalance] = useState("");
+  const [usdcBalance, setUsdcBalance] = useState("");
 
   const router = useRouter();
   const {
@@ -68,90 +72,103 @@ function Dashboard() {
     logout,
     getUser,
     getUserInfo,
+    isConnected,
     getAccounts,
     getBalance,
+    isConnecting,
     signMessage,
     signV4Message,
   } = useWeb3Auth();
   useEffect(() => {
     const getAddress = async () => {
       if (provider) {
-        const address: any = getAccounts();
-        const { usdcBalance, solBalance }: any = getBalance();
-        console.log("the address: ", usdcBalance);
-        console.log("the address: ", solBalance);
+        if (!isConnected) router.push("/login");
+        const user = await getUser();
+        const username = user.email.split("@", 1)[0];
+        const userRef = doc(db, "users", username);
+        const userSnap = await getDoc(userRef);
+        setUserInfo(userSnap.data());
+        console.log(userSnap.data());
+        const address: any = await provider.getAccounts();
+        console.log("my address: ", address);
+        const bal = await getBalance();
+        console.log("balance: ", bal);
+        const usdcBalance = "";
+        const solBalance = "";
+        const response = await axios({
+          url: `https://api.devnet.solana.com`,
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          data: [
+            {
+              jsonrpc: "2.0",
+              id: 1,
+              method: "getTokenAccountsByOwner",
+              params: [
+                address[0],
+                {
+                  mint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+                },
+                {
+                  encoding: "jsonParsed",
+                },
+              ],
+            },
+          ],
+        });
+        const solResponse = await axios({
+          url: `https://api.devnet.solana.com`,
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          data: [
+            {
+              jsonrpc: "2.0",
+              id: 1,
+              method: "getBalance",
+              params: [address[0]],
+            },
+          ],
+        });
+        console.log("balance 2:", solResponse.data[0].result.value);
+        setUsdcBalance(
+          response.data[0].result.value[0].account.data.parsed.info.tokenAmount
+            .uiAmountString
+        );
         setUserAddress(address[0]);
         console.log(balance);
-        setBalance(+solBalance);
-        setUsdcBalance(+usdcBalance);
+        setBalance(
+          (solResponse.data[0].result.value / LAMPORTS).toFixed(3).toString()
+        );
+        // setUsdcBalance(+usdcBalance);
       }
     };
     getAddress();
   }, [provider]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const username = userData.email.split("@", 1)[0];
-        const usersRef = collection(db, "users");
-        const userRef = doc(usersRef, username);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          console.log("Document data:", userSnap.data());
-        } else {
-          await setDoc(doc(db, "users", username), {
-            name: userData.name,
-            email: userData.email,
-            avatarUrl: userData.profileImage,
-            wallet: userAddress,
-          });
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getUser();
-  }, [userData, userAddress]);
-
-  const setInfluencer = async () => {
-    try {
-      const username = userData.email.split("@", 1)[0];
-      const docRef = doc(db, "users", username);
-      await updateDoc(docRef, {
-        bioDescription: "lorem ipsum",
-        followerCount: 1000,
-        followingCount: 20,
-        isVerified: true,
-        likesCount: 100,
-        isInfluencer: true,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   return (
     <>
-      {provider ? (
+      {!isConnecting ? (
         <Container>
+          <Header />
           <div className="flex md:w-1/2 lg:w-1/2 mx-auto flex-col mt-40">
             <div className=" justify-center">
-              <div className="flex items-center">
-                <img
-                  className="inline-block h-24 w-24 rounded-full ring-2 ring-white"
-                  src={userData.profileImage}
-                />
-                <div className=" ml-10">
-                  <h1 className="capitalize font-bold text-3xl text-center">
-                    {userData.name}
-                  </h1>
-                  <p>
-                    {" "}
-                    @<span>{userData.email.split("@", 1)[0]}</span>
-                  </p>
+              {userInfo && (
+                <div className="flex items-center">
+                  <img
+                    className="inline-block h-24 w-24 rounded-full ring-2 ring-white"
+                    src={userInfo.avatarUrl}
+                  />
+                  <div className=" ml-10">
+                    <h1 className="capitalize font-bold text-3xl text-center">
+                      {userInfo.name}
+                    </h1>
+                    <p>
+                      {" "}
+                      @<span>{userInfo.email.split("@", 1)[0]}</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <table className="border-collapse table-auto w-full text-sm mt-10">
                 <tbody className="bg-white dark:bg-slate-800">
@@ -168,7 +185,7 @@ function Dashboard() {
                       email
                     </td>
                     <td className="border-b border-slate-100 dark:border-slate-700 p-4 text-slate-500 dark:text-slate-400">
-                      {userData.email}
+                      {userInfo && userInfo.email}
                     </td>
                   </tr>
                   <tr>
@@ -176,7 +193,7 @@ function Dashboard() {
                       Balance (SOL)
                     </td>
                     <td className="border-b border-slate-100 dark:border-slate-700 p-4 text-slate-500 dark:text-slate-400">
-                      {balance / LAMPORTS}
+                      {balance}
                     </td>
                   </tr>
                   <tr>
@@ -184,24 +201,16 @@ function Dashboard() {
                       Balance (USDC)
                     </td>
                     <td className="border-b border-slate-100 dark:border-slate-700 p-4 text-slate-500 dark:text-slate-400">
-                      {usdcBalance / 1_000_000}
+                      {usdcBalance}
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <div className="mt-6">
-                <button
-                  className="pr-12 pl-12 pb-3 pt-3 rounded-full font-semibold border-none text-white bg-[#635BFF] hover:bg-[#8983fa]"
-                  onClick={setInfluencer}
-                >
-                  I am influencer
-                </button>
-              </div>
             </div>
           </div>
         </Container>
       ) : (
-        <LoginSection login={login} />
+        <Loader />
       )}
     </>
   );
