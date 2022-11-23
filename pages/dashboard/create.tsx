@@ -253,7 +253,7 @@ const Create = () => {
       {!isConnecting && provider ? (
         <Container>
           <Header />
-          <div className="flex lg:w-1/2 md:w-2/3 mx-auto flex-col mt-10 mb-5">
+          <div className="flex lg:w-1/2 md:w-2/3 mx-auto flex-col mt-24 mb-5">
             <div className="mb-10">
               <Link href="/dashboard">
                 <div className=" cursor-pointer p-3 hover:bg-gray-50 inline-block rounded-lg">

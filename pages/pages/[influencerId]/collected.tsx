@@ -122,7 +122,7 @@ const Profile = () => {
       {!isConnecting && provider ? (
         <Container>
           <Header />
-          <div className="md:flex mx-auto mt-20">
+          <div className="md:flex mx-auto  mt-32">
             <div className="w-full md:w-1/4 justify-center mr-0 md:mr-10 md:pr-16 pr-0 md:border-r md:border-gray-100">
               <div className="flex flex-col mb-8">
                 <div>

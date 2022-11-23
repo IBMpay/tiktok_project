@@ -132,101 +132,103 @@ const Profile = () => {
   return (
     <>
       {!isConnecting && provider ? (
-        <Container>
-          <Header />
-          <div className="md:flex mx-auto mt-20">
-            <div className="w-full md:w-1/4 justify-center mr-0 md:mr-10 md:pr-16 pr-0 md:border-r md:border-gray-100">
-              <div className="flex flex-col mb-8">
-                <div>
-                  <img
-                    src={avatarUrl}
-                    className="h-24 w-24 rounded-full mx-auto"
-                  />
-                </div>
-                <div className=" text-center mt-4 ">
-                  <p className="font-bold text-lg mb-2 capitalize">
-                    {username}
-                  </p>
-                </div>
-                <div className="text-center mb-2">
-                  {/* <p className="text-sm text-gray-600">@{username}</p> */}
-                  <p className="text-xs text-gray-400">
-                    {truncate(walletAddress, 16)}
-                  </p>
-                  <p className="">{description}</p>
-                </div>
-                <div className="flex justify-between text-center">
+        <>
+          <Container>
+            <Header />
+            <div className="md:flex mx-auto mt-32">
+              <div className="w-full md:w-1/4 justify-center mr-0 md:mr-10 md:pr-16 pr-0 md:border-r md:border-gray-100">
+                <div className="flex flex-col mb-8">
                   <div>
-                    <p className="font-bold">{followersCount}</p>
-                    <p>Followers</p>
+                    <img
+                      src={avatarUrl}
+                      className="h-24 w-24 rounded-full mx-auto"
+                    />
                   </div>
-                  <div>
-                    <p className="font-bold">{followingCount}</p>
-                    <p>Following</p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  {isInfluencer ? (
-                    <Link href="/dashboard/profile">
-                      <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
-                        Edit Profile
-                      </button>
-                    </Link>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
-                        Follow
-                      </button>
-                      <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
-                        Share
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="w-full md:w-3/4 md:mb-6 md:ml-6">
-              <div className=" mb-6">
-                <div className="flex justify-center">
-                  <div className="flex">
-                    <p className="px-4 py-2 font-bold border-b border-black">
-                      Created
+                  <div className=" text-center mt-4 ">
+                    <p className="font-bold text-lg mb-2 capitalize">
+                      {username}
                     </p>
-                    <Link href={`${path}/collected`}>
-                      <p className="px-4 py-2 cursor-pointer">Collected</p>
-                    </Link>
+                  </div>
+                  <div className="text-center mb-2">
+                    {/* <p className="text-sm text-gray-600">@{username}</p> */}
+                    <p className="text-xs text-gray-400">
+                      {truncate(walletAddress, 16)}
+                    </p>
+                    <p className="">{description}</p>
+                  </div>
+                  <div className="flex justify-between text-center">
+                    <div>
+                      <p className="font-bold">{followersCount}</p>
+                      <p>Followers</p>
+                    </div>
+                    <div>
+                      <p className="font-bold">{followingCount}</p>
+                      <p>Following</p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    {isInfluencer ? (
+                      <Link href="/dashboard/profile">
+                        <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
+                          Edit Profile
+                        </button>
+                      </Link>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
+                          Follow
+                        </button>
+                        <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
+                          Share
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="grid md:grid-cols-3 lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
-                {isInfluencer && (
-                  <Link href="/dashboard/create">
-                    <div className=" rounded-xl overflow-hidden min-h-72 hover:border-[#635BFF] py-10 text-gray-600 drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300 h-full flex items-center justify-center bg-gray-200 border-2 border-gray-200">
-                      <div className="flex flex-col justify-center items-center">
-                        <PlusCircleIcon className="h-20 w-20" />
-                        <p className="text-2xl font-bold">Create an NFT</p>
-                      </div>
+              <div className="w-full md:w-3/4 md:mb-6 md:ml-6">
+                <div className=" mb-6">
+                  <div className="flex justify-center">
+                    <div className="flex">
+                      <p className="px-4 py-2 font-bold border-b border-black">
+                        Created
+                      </p>
+                      <Link href={`${path}/collected`}>
+                        <p className="px-4 py-2 cursor-pointer">Collected</p>
+                      </Link>
                     </div>
-                  </Link>
-                )}
-                {collectibles.map((nft, i) => (
-                  <NFTPostItem
-                    key={i}
-                    id={nft.id}
-                    type={nft.mediaType}
-                    lastSalePrice={nft.lastSalePrice || null}
-                    baseLink={path}
-                    video={nft.videoUrl}
-                    title={nft.title}
-                    price={+nft.price}
-                    description={nft.description}
-                    provider={provider}
-                  />
-                ))}
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-3 lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
+                  {isInfluencer && (
+                    <Link href="/dashboard/create">
+                      <div className=" rounded-xl overflow-hidden min-h-72 hover:border-[#635BFF] py-10 text-gray-600 drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300 h-full flex items-center justify-center bg-gray-200 border-2 border-gray-200">
+                        <div className="flex flex-col justify-center items-center">
+                          <PlusCircleIcon className="h-20 w-20" />
+                          <p className="text-2xl font-bold">Create an NFT</p>
+                        </div>
+                      </div>
+                    </Link>
+                  )}
+                  {collectibles.map((nft, i) => (
+                    <NFTPostItem
+                      key={i}
+                      id={nft.id}
+                      type={nft.mediaType}
+                      lastSalePrice={nft.lastSalePrice || null}
+                      baseLink={path}
+                      video={nft.videoUrl}
+                      title={nft.title}
+                      price={+nft.price}
+                      description={nft.description}
+                      provider={provider}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </Container>
+          </Container>
+        </>
       ) : (
         <Loader />
       )}

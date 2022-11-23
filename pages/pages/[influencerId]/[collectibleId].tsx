@@ -384,9 +384,10 @@ const Grifter = () => {
         await updateDoc(collectedRef, {
           active: false,
         });
+        setModalMessage("Your NFT has been listed successfully!");
+        setOpen(true);
       }
-      setModalMessage("Your NFT has been listed successfully!");
-      setOpen(true);
+
       // console.log("token ", mintAddress, " has been minted--");
     } catch (error) {
       console.log(error);
@@ -456,9 +457,10 @@ const Grifter = () => {
         await updateDoc(collectedRef, {
           active: true,
         });
+        setModalMessage("Your NFT has been delisted successfully!");
+        setOpen(true);
       }
-      setModalMessage("Your NFT has been delisted successfully!");
-      setOpen(true);
+
       // console.log("token ", mintAddress, " has been minted--");
     } catch (error) {
       console.log(error);
@@ -553,9 +555,10 @@ const Grifter = () => {
             active: true,
           });
         }
+        setModalMessage("Your NFT has been bought successfully!");
+        setOpen(true);
       }
-      setModalMessage("Your NFT has been bought successfully!");
-      setOpen(true);
+
       // console.log("token ", mintAddress, " has been minted--");
     } catch (error) {
       console.log(error);
@@ -570,7 +573,7 @@ const Grifter = () => {
         provider ? ( */ ? (
         <Container>
           <Header />
-          <div className="md:flex mt-20">
+          <div className="md:flex  mt-32">
             <div className="md:w-2/4">
               {/* <img src={"/assets/MakeOfferImg.png"} className="rounded-xl" alt="" /> */}
               <div className="rounded-xl overflow-hidden mb-8">
