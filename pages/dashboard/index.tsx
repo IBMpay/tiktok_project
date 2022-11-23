@@ -84,7 +84,7 @@ function Dashboard() {
       // if (!isConnected && !isConnecting) router.push("/login");
       if (provider) {
         const user = await getUser();
-        const username = user.email.split("@", 1)[0];
+        const username = user.email.split("@", 1)[0].replace(".", "");
         const userRef = doc(db, "users", username);
         const userSnap = await getDoc(userRef);
         setUserInfo(userSnap.data());
@@ -129,13 +129,18 @@ function Dashboard() {
             },
           ],
         });
-        console.log("balance 2:", solResponse.data[0].result.value);
-        setUsdcBalance(
-          response.data[0].result.value[0].account.data.parsed.info.tokenAmount
-            .uiAmountString
-        );
+        console.log("sol res", solResponse);
+        console.log("res", response);
+        // console.log("balance 2:", solResponse.data[0].result.value);
+        console.log(response.data[0].result.value.length);
+        const usdcAmount =
+          response.data[0].result.value.length !== 0
+            ? response.data[0].result.value[0].account.data.parsed.info
+                .tokenAmount.uiAmountString
+            : "0";
+        setUsdcBalance(usdcAmount);
         setUserAddress(address[0]);
-        console.log(balance);
+        // console.log(balance);
         setBalance(
           (solResponse.data[0].result.value / LAMPORTS).toFixed(3).toString()
         );
@@ -164,7 +169,10 @@ function Dashboard() {
                     </h1>
                     <p>
                       {" "}
-                      @<span>{userInfo.email.split("@", 1)[0]}</span>
+                      @
+                      <span>
+                        {userInfo.email.split("@", 1)[0].replace(".", "")}
+                      </span>
                     </p>
                   </div>
                 </div>

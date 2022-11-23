@@ -160,7 +160,7 @@ const Create = () => {
         console.log("add: ", address);
         setCreator(address[0]);
         const user = await getUser();
-        const username = user.email.split("@", 1)[0];
+        const username = user.email.split("@", 1)[0].replace(".", "");
         setMyUserName(username);
       }
     };
@@ -172,7 +172,7 @@ const Create = () => {
     try {
       setLoading(true);
       const user = await getUser();
-      const username = user.email.split("@", 1)[0];
+      const username = user.email.split("@", 1)[0].replace(".", "");
       console.log("something to upload", {
         media_url: videoUrl,
         media_type: mediaType,

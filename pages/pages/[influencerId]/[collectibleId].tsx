@@ -167,6 +167,21 @@ const Grifter = () => {
             setMediaUrl(collectiblesData.videoUrl);
             setArtist(influencerId.toString());
 
+            const solResponse = await axios({
+              url: `https://api.devnet.solana.com`,
+              method: "post",
+              headers: { "Content-Type": "application/json" },
+              data: [
+                {
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "getBalance",
+                  params: [address[0]],
+                },
+              ],
+            });
+
+            console.log("response sol", solResponse);
             const response = await axios({
               url: `https://api.devnet.solana.com`,
               method: "post",
@@ -188,22 +203,15 @@ const Grifter = () => {
                 },
               ],
             });
-            const solResponse = await axios({
-              url: `https://api.devnet.solana.com`,
-              method: "post",
-              headers: { "Content-Type": "application/json" },
-              data: [
-                {
-                  jsonrpc: "2.0",
-                  id: 1,
-                  method: "getBalance",
-                  params: [address[0]],
-                },
-              ],
-            });
+
+            console.log("response", response);
+
             const usdcBal =
-              +response.data[0].result.value[0].account.data.parsed.info
-                .tokenAmount.uiAmountString;
+              response.data[0].result.value.length !== 0
+                ? +response.data[0].result.value[0].account.data.parsed.info
+                    .tokenAmount.uiAmountString
+                : 0;
+            // setUsdcBalance(usdcBal);
             const solBal = +(
               solResponse.data[0].result.value / 1_000_000_000
             ).toFixed(3);
@@ -1006,10 +1014,10 @@ const Grifter = () => {
                 id={nft.id}
                 type={nft.mediaType}
                 lastSalePrice={nft.lastSalePrice || null}
-                baseLink={path}
+                baseLink={`/pages/${influencerId}`}
                 video={nft.videoUrl}
                 title={nft.title}
-                price={+nft.price}
+                price={nft.price}
                 description={nft.description}
                 provider={provider}
               />

@@ -195,7 +195,7 @@ const Profile = () => {
                     baseLink={path}
                     video={nft.media}
                     title={nft.title}
-                    price={+nft.buyPrice}
+                    price={nft.buyPrice}
                     provider={provider}
                     type={nft.mediaType}
                   />

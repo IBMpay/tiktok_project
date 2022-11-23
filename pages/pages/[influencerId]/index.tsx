@@ -219,7 +219,7 @@ const Profile = () => {
                       baseLink={path}
                       video={nft.videoUrl}
                       title={nft.title}
-                      price={+nft.price}
+                      price={nft.price}
                       description={nft.description}
                       provider={provider}
                     />

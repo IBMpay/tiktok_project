@@ -113,14 +113,16 @@ const Profile = () => {
       if (provider) {
         try {
           const user = await getUser();
-          const username = user.email.split("@", 1)[0];
+          const username = user.email.split("@", 1)[0].replace(".", "");
           setMyUserName(username);
           const userRef = doc(db, "users", username);
           const address = await getWallets();
           console.log("add: ", address);
           setMyAddress(address[0]);
+          console.log(username);
           const userResponse = await getDoc(userRef);
-          if (userResponse.exists) {
+          if (userResponse.exists()) {
+            console.log("exists");
             const userData = userResponse.data();
             setFullName(userData.name);
             setAvatarUrl(userData.avatarUrl);
@@ -150,7 +152,7 @@ const Profile = () => {
     try {
       setLoading(true);
       const user = await getUser();
-      const username = user.email.split("@", 1)[0];
+      const username = user.email.split("@", 1)[0].replace(".", "");
       const userRef = doc(db, "users", username);
       // if (isInfluencer) {
       await updateDoc(userRef, {
@@ -222,7 +224,7 @@ const Profile = () => {
               <div
                 className="h-72 w-72 bg-gray-100 mx-auto rounded-full flex items-center justify-center"
                 style={{
-                  backgroundImage: `url(${avatarUrl})`,
+                  backgroundImage: avatarUrl ? `url(${avatarUrl})` : "",
                   backgroundSize: "100%",
                 }}
               >
