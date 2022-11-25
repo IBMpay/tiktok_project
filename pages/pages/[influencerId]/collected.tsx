@@ -127,16 +127,16 @@ const Profile = () => {
             <div className="w-full md:w-1/4 justify-center mr-0 md:mr-10 md:pr-16 pr-0 md:border-r md:border-gray-100">
               <div className="flex flex-col mb-8">
                 <div className="flex justify-center">
-                  <img
+                  {/* <img
                     src={avatarUrl}
                     className="h-24 w-24 rounded-full mx-auto"
-                  />
-                  {/* <Image
+                  /> */}
+                  <Image
                     src={avatarUrl}
                     width={96}
                     height={96}
                     className="h-24 w-24 rounded-full mx-auto"
-                  /> */}
+                  />
                 </div>
                 <div className=" text-center mt-4 ">
                   <p className="font-bold text-lg mb-2 capitalize">
