@@ -25,6 +25,7 @@ import LoginSection from "../../components/loginSection";
 import Loader from "../../components/loader";
 import axios from "axios";
 import Header from "../../components/Header";
+import Image from "next/image";
 const clientId =
   "BOjke_VdSeEjE5Gap8t4hfg_1QRymSFuTYxklhGttI-6H-ZJARwiLQunE9PYrl9xyxwNerQQT6u01uDP744_mM8"; // get from https://dashboard.web3auth.io
 interface UserData {
@@ -159,10 +160,14 @@ function Dashboard() {
             <div className=" justify-center">
               {userInfo && (
                 <div className="flex items-center">
-                  <img
-                    className="inline-block h-24 w-24 rounded-full ring-2 ring-white"
+                  {/* <div className="flex justify-center"> */}
+                  <Image
                     src={userInfo.avatarUrl}
+                    width={96}
+                    height={96}
+                    className="inline-block h-24 w-24 rounded-full ring-2 ring-white"
                   />
+                  {/* </div> */}
                   <div className=" ml-10">
                     <h1 className="capitalize font-bold text-3xl text-center">
                       {userInfo.name}

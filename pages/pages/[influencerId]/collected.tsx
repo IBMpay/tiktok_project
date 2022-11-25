@@ -26,6 +26,7 @@ import Header from "../../../components/Header";
 import Link from "next/link";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import NFTPostCollected from "../../../components/NFTPostCollected";
+import Image from "next/image";
 
 const Profile = () => {
   const router = useRouter();
@@ -125,11 +126,17 @@ const Profile = () => {
           <div className="md:flex mx-auto  mt-32">
             <div className="w-full md:w-1/4 justify-center mr-0 md:mr-10 md:pr-16 pr-0 md:border-r md:border-gray-100">
               <div className="flex flex-col mb-8">
-                <div>
+                <div className="flex justify-center">
                   <img
                     src={avatarUrl}
                     className="h-24 w-24 rounded-full mx-auto"
                   />
+                  {/* <Image
+                    src={avatarUrl}
+                    width={96}
+                    height={96}
+                    className="h-24 w-24 rounded-full mx-auto"
+                  /> */}
                 </div>
                 <div className=" text-center mt-4 ">
                   <p className="font-bold text-lg mb-2 capitalize">

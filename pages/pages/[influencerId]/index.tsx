@@ -4,7 +4,16 @@ import React, { useEffect, useState } from "react";
 import Button from "../../../components/Button";
 import NFTGridItem from "../../../components/NFTGridItem";
 import NFTPostItem from "../../../components/NFTPostItem";
-import { collection, doc, getDoc, getDocs } from "@firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+} from "@firebase/firestore";
 import { Web3Auth } from "@web3auth/web3auth";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { db } from "../../../firebase-config";
@@ -25,6 +34,7 @@ import { truncate } from "../../../utils/string";
 import Header from "../../../components/Header";
 import Link from "next/link";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 
 const Profile = () => {
   const router = useRouter();
@@ -50,10 +60,12 @@ const Profile = () => {
 
   const { connection } = useConnection();
   const [username, setUsername] = useState<string>("");
+  const [myUsername, setMyUsername] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [followersCount, setFollowersCount] = useState<number>(0);
   const [followingCount, setFollowingCount] = useState<number>(0);
+  const [myFollowingCount, setMyFollowingCount] = useState<number>(0);
   const [collectibles, setCollectibles] = useState([]);
   const [collected, setCollected] = useState([]);
   const [walletAddress, setWalletAddress] = useState<string>("");
@@ -62,6 +74,8 @@ const Profile = () => {
   const [isPageOwner, setIsPageOwner] = useState<boolean>(false);
   const [path, setPath] = useState<string>("");
   const [showCollected, setShowCollected] = useState<boolean>(false);
+  const [follows, setFollows] = useState([]);
+  const [hasFollowed, setHasFollowed] = useState<boolean>(false);
 
   console.log(influencerId);
   useEffect(() => {
@@ -78,6 +92,10 @@ const Profile = () => {
 
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
+            const user = await getUser();
+            const myUName = user.email.split("@", 1)[0].replace(".", "");
+            console.log("my uuname: ", myUName);
+            setMyUsername(myUName);
             const collectiblesRef = collection(
               usersRef,
               influencerUsername,
@@ -108,16 +126,17 @@ const Profile = () => {
             console.log(userData);
             setUsername(influencerUsername);
             setDescription(userData.bioDescription);
-            if (userData.followerCount)
-              setFollowersCount(userData.followerCount);
+            if (userData.followers) setFollowersCount(userData.followers);
 
-            if (userData.followingCount)
-              setFollowingCount(userData.followingCount);
+            if (userData.followings) setFollowingCount(userData.followings);
             setAvatarUrl(userData.avatarUrl);
             setWalletAddress(userData.wallet);
+
             setFullName(userData.name);
             const userEmail = await getUser();
             setIsInfluencer(userEmail.email === userData.email);
+
+            console.log("my username: ", myUsername);
           } else {
             console.log("doesn't exist");
           }
@@ -129,6 +148,89 @@ const Profile = () => {
     init();
   }, [influencerId, provider]);
 
+  useEffect(() => {
+    if (influencerId && provider && myUsername) {
+      console.log("my username: ", myUsername);
+      onSnapshot(collection(db, "users", myUsername, "follows"), (snapshot) => {
+        setFollows(snapshot.docs);
+        console.log("snap:", snapshot.docs);
+      });
+    }
+  }, [influencerId, db, myUsername, provider]);
+
+  useEffect(() => {
+    if (influencerId && provider) {
+      onSnapshot(doc(db, "users", influencerId.toString()), (snapshot) => {
+        if (snapshot.data().followers)
+          setFollowersCount(snapshot.data().followers);
+        if (snapshot.data().following)
+          setFollowingCount(snapshot.data().followings);
+      });
+    }
+  }, [follows]);
+  useEffect(
+    () =>
+      setHasFollowed(
+        follows.findIndex((follow) => follow.id === influencerId.toString()) !==
+          -1
+      ),
+    [follows]
+  );
+
+  const followInfluencer = async () => {
+    try {
+      const followsRef = doc(
+        db,
+        "users",
+        myUsername,
+        "follows",
+        influencerId.toString()
+      );
+      const userRef = doc(db, "users", myUsername);
+      const influencerRef = doc(db, "users", influencerId.toString());
+      const userSnap = await getDoc(userRef);
+      const myFollowings = userSnap.data().followings;
+      if (hasFollowed) {
+        console.log({
+          curFol: followersCount,
+          curFolwngs: myFollowings,
+          followers: followersCount - 1,
+          followings: myFollowings - 1,
+        });
+        await updateDoc(influencerRef, {
+          followers: followersCount - 1,
+        });
+        setFollowersCount(followersCount - 1);
+
+        await updateDoc(userRef, {
+          followings: myFollowings - 1,
+        });
+
+        await deleteDoc(followsRef);
+      } else {
+        console.log({
+          curFol: followersCount,
+          curFolwngs: myFollowings,
+          followers: followersCount + 1,
+          followings: myFollowings + 1,
+        });
+        await updateDoc(influencerRef, {
+          followers: followersCount + 1,
+        });
+
+        await updateDoc(userRef, {
+          followings: myFollowings + 1,
+        });
+
+        await setDoc(followsRef, {
+          username: influencerId.toString(),
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <>
       {!isConnecting && provider ? (
@@ -138,11 +240,19 @@ const Profile = () => {
             <div className="md:flex mx-auto mt-32">
               <div className="w-full md:w-1/4 justify-center mr-0 md:mr-10 md:pr-16 pr-0 md:border-r md:border-gray-100">
                 <div className="flex flex-col mb-8">
-                  <div>
+                  <div className="flex justify-center">
                     <img
                       src={avatarUrl}
+                      // width={96}
+                      // height={96}
                       className="h-24 w-24 rounded-full mx-auto"
                     />
+                    {/* <Image
+                      src={avatarUrl}
+                      width={96}
+                      height={96}
+                      className="h-24 w-24 rounded-full mx-auto"
+                    /> */}
                   </div>
                   <div className=" text-center mt-4 ">
                     <p className="font-bold text-lg mb-2 capitalize">
@@ -161,6 +271,7 @@ const Profile = () => {
                       <p className="font-bold">{followersCount}</p>
                       <p>Followers</p>
                     </div>
+
                     <div>
                       <p className="font-bold">{followingCount}</p>
                       <p>Following</p>
@@ -175,9 +286,21 @@ const Profile = () => {
                       </Link>
                     ) : (
                       <div className="flex gap-2">
-                        <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
-                          Follow
-                        </button>
+                        {hasFollowed ? (
+                          <button
+                            onClick={followInfluencer}
+                            className="text-center  px-6 border border-1 border-gray-500 rounded-md w-full bg-[#635BFF] text-white"
+                          >
+                            Unfollow
+                          </button>
+                        ) : (
+                          <button
+                            onClick={followInfluencer}
+                            className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
+                          >
+                            Follow
+                          </button>
+                        )}
                         <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
                           Share
                         </button>

@@ -1,7 +1,11 @@
-import { ADAPTER_EVENTS, SafeEventEmitterProvider } from "@web3auth/base";
+import {
+  ADAPTER_EVENTS,
+  ADAPTER_STATUS,
+  SafeEventEmitterProvider,
+} from "@web3auth/base";
 import { Web3Auth } from "@web3auth/modal";
 import { SolanaWalletConnectorPlugin } from "@web3auth/solana-wallet-connector-plugin";
-import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
+import BASE, { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import {
   createContext,
   FunctionComponent,
@@ -11,6 +15,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { getCookies } from "cookies-next";
 import { CHAIN_CONFIG, CHAIN_CONFIG_TYPE } from "../config/chainConfig";
 import { WEB3AUTH_NETWORK_TYPE } from "../config/web3AuthNetwork";
 import { getWalletProvider, IWalletProvider } from "./walletProvider";
@@ -89,6 +94,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(true);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [myAdapter, setMyAdapter] = useState<any>();
   const setWalletProvider = useCallback(
     (web3authProvider: SafeEventEmitterProvider) => {
       const walletProvider = getWalletProvider(
@@ -114,7 +120,9 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
         setIsConnecting(false);
         setWalletProvider(web3auth?.provider as SafeEventEmitterProvider);
       });
-
+      web3auth.on(ADAPTER_EVENTS.READY, () => {
+        console.log("it's ready");
+      });
       web3auth.on(ADAPTER_EVENTS.CONNECTING, () => {
         console.log("connecting");
         // setIsConnecting(true);
@@ -130,9 +138,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       web3auth.on(ADAPTER_EVENTS.ERRORED, (error: unknown) => {
         console.error("some error or user has cancelled login request", error);
       });
-      web3auth.on(ADAPTER_EVENTS.READY, () => {
-        console.log("some error or user has cancelled login request");
-      });
+
       web3auth.on(ADAPTER_EVENTS.NOT_READY, () => {
         console.log("some error or user has cancelled login request");
       });
@@ -187,12 +193,25 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
           chainConfig: currentChainConfig,
           adapterSettings: { network: web3AuthNetwork, clientId },
         });
+        setMyAdapter(adapter);
+        // console.log("the adapter: ", adapter);
+        // if (adapter.status === "ready") console.log("I am ready to login");
+        // else {
+        //   console.log("nooooot ready!!!!!!", adapter["status"], adapter);
+        // }
+        // console.log("*************", getCookies());
         web3AuthInstance.configureAdapter(adapter);
 
         subscribeAuthEvents(web3AuthInstance, torusPlugin);
+        // web3AuthInstance.on(ADAPTER_EVENTS.NOT_READY, () => {
+        //   console.log("some error or user has cancelled login request");
+        // });
+        // console.log("is cache: ", web3AuthInstance);
         setWeb3Auth(web3AuthInstance);
         await web3AuthInstance.initModal();
+        // console.log("web3: ", web3Auth);s
       } catch (error) {
+        router.push("/login");
         console.error(error);
       } finally {
         setIsLoading(false);
@@ -200,26 +219,22 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
       }
     }
     init();
-  }, [chain, web3AuthNetwork, setWalletProvider, ADAPTER_EVENTS]);
+  }, [chain, web3AuthNetwork, setWalletProvider]);
 
   useEffect(() => {
     const init = async () => {
-      console.log("here 1");
       console.log(web3Auth);
-
       if (web3Auth && web3Auth?.cachedAdapter == null) router.push("/login");
       if (provider && web3Auth) {
         try {
           const user = await web3Auth.getUserInfo();
-          console.log("here 2", user);
           const wallets = await provider.getAccounts();
-          console.log("here 3");
           const username = user.email.split("@", 1)[0].replace(".", "");
           // console.log(username);
           const userRef = doc(db, "users", username);
-          console.log("user ref: ", userRef);
+          // console.log("user ref: ", userRef);K
           const userSnap = await getDoc(userRef);
-          console.log(userSnap);
+          // console.log(userSnap);
 
           if (!userSnap.exists()) {
             await setDoc(userRef, {
@@ -236,7 +251,7 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
     };
     init();
   }, [provider, web3Auth]);
-
+  // useEffect(() => console.log("status: ",BASE.), [ADAPTER_STATUS]);
   const login = async () => {
     if (!web3Auth) {
       console.log("web3auth not initialized yet");

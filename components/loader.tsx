@@ -1,6 +1,16 @@
-import React from "react";
+import { useRouter } from "next/router";
+import React, { useEffect } from "react";
+import { useWeb3Auth } from "../services/web3auth";
 
 function Loader() {
+  const { provider } = useWeb3Auth();
+  const router = useRouter();
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.push("/login");
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [provider]);
   return (
     <div
       className="h-full min-h-screen w-screen bg-cover flex items-center justify-center"
