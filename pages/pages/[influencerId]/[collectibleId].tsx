@@ -919,7 +919,7 @@ const Grifter = () => {
                           {isMobileBrowser ? (
                             <RWebShare
                               data={{
-                                text: "Web Share - Ayoo",
+                                text: "Ayoo site",
                                 url: fullPath,
                                 title: "Ayoo",
                               }}
@@ -928,7 +928,7 @@ const Grifter = () => {
                               }
                             >
                               <button className="border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold">
-                                Share
+                                Share with your fans
                               </button>
                             </RWebShare>
                           ) : (

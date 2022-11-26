@@ -313,7 +313,7 @@ const Profile = () => {
                       {isMobileBrowser ? (
                         <RWebShare
                           data={{
-                            text: "Web Share - Ayoo",
+                            text: "Ayoo site",
                             url: fullPath,
                             title: "Ayoo",
                           }}
