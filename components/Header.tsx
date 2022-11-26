@@ -10,7 +10,7 @@ import { useWeb3Auth } from "../services/web3auth";
 import { doc, getDoc } from "@firebase/firestore";
 import { db } from "../firebase-config";
 import Image from "next/image";
-import { Tooltip } from "@mui/material";
+import { Tooltip } from "@material-tailwind/react";
 
 function Header() {
   const { logout, getUser, provider } = useWeb3Auth();
@@ -76,31 +76,33 @@ function Header() {
                 Create
               </button>
             </Link>
-            <Link href={`/pages/${userName}`}>
-              <Tooltip title="view page" placement="bottom">
-                <div className=" mr-4  cursor-pointer ">
-                  <Image
-                    src={avatarUrl}
-                    width={42}
-                    height={42}
-                    className="rounded-full border-2 hover:border-blue-500"
-                  />
-                </div>
-              </Tooltip>
-            </Link>
+            {/* <Tooltip title="view page"> */}
+            <div className=" mr-4  cursor-pointer ">
+              {/* <Tooltip content="Profile"> */}
+              <Link href={`/pages/${userName}`}>
+                <Image
+                  src={avatarUrl}
+                  width={42}
+                  height={42}
+                  className="rounded-full border-2 hover:border-blue-500"
+                />
+              </Link>
+              {/* </Tooltip> */}
+            </div>
+            {/* </Tooltip> */}
 
             <Link href={`/dashboard`}>
-              <Tooltip title="View-wallet" placement="bottom">
-                <button className="py-2">
-                  <WalletIcon className="h-7 w-7 mr-4 cursor-pointer hover:text-[#635BFF]" />
-                </button>
-              </Tooltip>
-            </Link>
-            <Tooltip title="Logout" placement="bottom">
-              <button className="py-2" onClick={logout}>
-                <ArrowRightOnRectangleIcon className="h-7 w-7 mr-4 cursor-pointer hover:text-[#635BFF]" />
+              {/* <Tooltip title="View-wallet" placement="bottom"> */}
+              <button className="py-2">
+                <WalletIcon className="h-7 w-7 mr-4 cursor-pointer hover:text-[#635BFF]" />
               </button>
-            </Tooltip>
+              {/* </Tooltip> */}
+            </Link>
+            {/* <Tooltip title="Logout" placement="bottom"> */}
+            <button className="py-2" onClick={logout}>
+              <ArrowRightOnRectangleIcon className="h-7 w-7 mr-4 cursor-pointer hover:text-[#635BFF]" />
+            </button>
+            {/* </Tooltip> */}
           </div>
         </div>
       </div>
