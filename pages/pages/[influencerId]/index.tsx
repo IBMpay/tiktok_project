@@ -47,7 +47,8 @@ import {
   TelegramIcon,
   TelegramShareButton,
 } from "react-share";
-
+import { isMobile } from "../../../utils/string";
+import { RWebShare } from "react-web-share";
 const Profile = () => {
   const router = useRouter();
   const { influencerId } = router.query;
@@ -92,6 +93,7 @@ const Profile = () => {
   const [createdNft, setCreatedNft] = useState<string>("");
   const [createdNftMediaUrl, setCreatedNftMediaUrl] = useState<string>("");
   const [createdNftMediaType, setCreatedNftMediaType] = useState<string>("");
+  const [isMobileBrowser, setIsMobileBrowser] = useState<boolean>(false);
   const [modalOpen, setModalOpen] = useState(false);
   const handleModalOpen = () => setModalOpen(true);
   const handleModalClose = () => setModalOpen(false);
@@ -368,40 +370,57 @@ const Profile = () => {
                             Follow
                           </button>
                         )}
-                        <button
-                          onClick={handleShareClick}
-                          className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
-                        >
-                          Share
-                        </button>
-                        <Popover
-                          id={elId}
-                          open={shareOpen}
-                          anchorEl={anchorEl}
-                          onClose={handleShareClose}
-                          anchorOrigin={{
-                            vertical: "bottom",
-                            horizontal: "left",
-                          }}
-                        >
-                          <div className="p-3">
-                            <FacebookShareButton url={fullPath}>
-                              <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
-                            </FacebookShareButton>
-                            <WhatsappShareButton url={fullPath}>
-                              <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
-                            </WhatsappShareButton>
-                            <TelegramShareButton url={fullPath}>
-                              <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
-                            </TelegramShareButton>
-                            <TwitterShareButton url={fullPath}>
-                              <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
-                            </TwitterShareButton>
-                            <EmailShareButton url={fullPath}>
-                              <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
-                            </EmailShareButton>
-                          </div>
-                        </Popover>
+                        {isMobileBrowser ? (
+                          <RWebShare
+                            data={{
+                              text: "Web Share - Ayoo",
+                              url: fullPath,
+                              title: "Ayoo",
+                            }}
+                            onClick={() => console.log("shared successfully!")}
+                          >
+                            <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
+                              Share on Web
+                            </button>
+                          </RWebShare>
+                        ) : (
+                          <>
+                            <button
+                              onClick={handleShareClick}
+                              className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
+                            >
+                              Share
+                            </button>
+                            <Popover
+                              id={elId}
+                              open={shareOpen}
+                              anchorEl={anchorEl}
+                              onClose={handleShareClose}
+                              anchorOrigin={{
+                                vertical: "bottom",
+                                horizontal: "left",
+                              }}
+                            >
+                              <div className="p-3">
+                                <FacebookShareButton url={fullPath}>
+                                  <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                </FacebookShareButton>
+                                <WhatsappShareButton url={fullPath}>
+                                  <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                </WhatsappShareButton>
+                                <TelegramShareButton url={fullPath}>
+                                  <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                </TelegramShareButton>
+                                <TwitterShareButton url={fullPath}>
+                                  <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                </TwitterShareButton>
+                                <EmailShareButton url={fullPath}>
+                                  <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                </EmailShareButton>
+                              </div>
+                            </Popover>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -488,40 +507,57 @@ const Profile = () => {
                         View NFT
                       </p>
                     </Link>
-                    <button
-                      onClick={handleShareClick}
-                      className="py-2 mt-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white"
-                    >
-                      Share your NFT
-                    </button>
-                    <Popover
-                      id={elId}
-                      open={shareOpen}
-                      anchorEl={anchorEl}
-                      onClose={handleShareClose}
-                      anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "left",
-                      }}
-                    >
-                      <div className="p-3">
-                        <FacebookShareButton url={createdNftPath}>
-                          <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
-                        </FacebookShareButton>
-                        <WhatsappShareButton url={createdNftPath}>
-                          <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
-                        </WhatsappShareButton>
-                        <TelegramShareButton url={createdNftPath}>
-                          <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
-                        </TelegramShareButton>
-                        <TwitterShareButton url={createdNftPath}>
-                          <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
-                        </TwitterShareButton>
-                        <EmailShareButton url={createdNftPath}>
-                          <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
-                        </EmailShareButton>
-                      </div>
-                    </Popover>
+                    {isMobileBrowser ? (
+                      <RWebShare
+                        data={{
+                          text: "Web Share - Ayoo",
+                          url: createdNftPath,
+                          title: "Ayoo",
+                        }}
+                        onClick={() => console.log("shared successfully!")}
+                      >
+                        <button className="py-2 mt-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
+                          Share your NFT
+                        </button>
+                      </RWebShare>
+                    ) : (
+                      <>
+                        <button
+                          onClick={handleShareClick}
+                          className="py-2 mt-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white"
+                        >
+                          Share your NFT
+                        </button>
+                        <Popover
+                          id={elId}
+                          open={shareOpen}
+                          anchorEl={anchorEl}
+                          onClose={handleShareClose}
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "left",
+                          }}
+                        >
+                          <div className="p-3">
+                            <FacebookShareButton url={createdNftPath}>
+                              <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </FacebookShareButton>
+                            <WhatsappShareButton url={createdNftPath}>
+                              <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </WhatsappShareButton>
+                            <TelegramShareButton url={createdNftPath}>
+                              <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </TelegramShareButton>
+                            <TwitterShareButton url={createdNftPath}>
+                              <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </TwitterShareButton>
+                            <EmailShareButton url={createdNftPath}>
+                              <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </EmailShareButton>
+                          </div>
+                        </Popover>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

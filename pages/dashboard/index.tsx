@@ -62,7 +62,6 @@ function Dashboard() {
   const [userAddress, setUserAddress] = useState("");
   const [balance, setBalance] = useState("");
   const [usdcBalance, setUsdcBalance] = useState("");
-
   const router = useRouter();
   const {
     provider,
@@ -80,6 +79,7 @@ function Dashboard() {
     signMessage,
     signV4Message,
   } = useWeb3Auth();
+
   useEffect(() => {
     const getAddress = async () => {
       // if (!isConnected && !isConnecting) router.push("/login");

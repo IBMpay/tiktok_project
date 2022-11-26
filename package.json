@@ -39,7 +39,8 @@
     "react-client-session": "^0.0.8",
     "react-dom": "18.2.0",
     "react-share": "^4.4.1",
-    "react-use": "^17.4.0"
+    "react-use": "^17.4.0",
+    "react-web-share": "^2.0.2"
   },
   "devDependencies": {
     "@types/elliptic": "^6.4.14",

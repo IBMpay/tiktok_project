@@ -36,6 +36,7 @@ import Link from "next/link";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import NFTPostCollected from "../../../components/NFTPostCollected";
 import Image from "next/image";
+import { isMobile } from "../../../utils/string";
 import {
   FacebookShareButton,
   FacebookIcon,
@@ -48,6 +49,7 @@ import {
   TelegramIcon,
   TelegramShareButton,
 } from "react-share";
+import { RWebShare } from "react-web-share";
 
 const Profile = () => {
   const router = useRouter();
@@ -87,6 +89,7 @@ const Profile = () => {
   const [showCollected, setShowCollected] = useState<boolean>(false);
   const [fullPath, setFullPath] = useState<string>("");
   const [follows, setFollows] = useState([]);
+  const [isMobileBrowser, setIsMobileBrowser] = useState<boolean>(false);
   const [hasFollowed, setHasFollowed] = useState<boolean>(false);
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
@@ -106,6 +109,7 @@ const Profile = () => {
       // if (!isConnected && !isConnecting) router.push("/login");
       if (influencerId && provider) {
         try {
+          setIsMobileBrowser(isMobile());
           setFullPath(`${window.location.origin}${router.asPath}`);
           setPath(`/pages/${influencerId}`);
           console.log("the pubki: ", connection);
@@ -306,40 +310,57 @@ const Profile = () => {
                         </button>
                       )}
 
-                      <button
-                        onClick={handleShareClick}
-                        className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
-                      >
-                        Share
-                      </button>
-                      <Popover
-                        id={elId}
-                        open={shareOpen}
-                        anchorEl={anchorEl}
-                        onClose={handleShareClose}
-                        anchorOrigin={{
-                          vertical: "bottom",
-                          horizontal: "left",
-                        }}
-                      >
-                        <div className="p-3">
-                          <FacebookShareButton url={fullPath}>
-                            <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
-                          </FacebookShareButton>
-                          <WhatsappShareButton url={fullPath}>
-                            <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
-                          </WhatsappShareButton>
-                          <TelegramShareButton url={fullPath}>
-                            <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
-                          </TelegramShareButton>
-                          <TwitterShareButton url={fullPath}>
-                            <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
-                          </TwitterShareButton>
-                          <EmailShareButton url={fullPath}>
-                            <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
-                          </EmailShareButton>
-                        </div>
-                      </Popover>
+                      {isMobileBrowser ? (
+                        <RWebShare
+                          data={{
+                            text: "Web Share - Ayoo",
+                            url: fullPath,
+                            title: "Ayoo",
+                          }}
+                          onClick={() => console.log("shared successfully!")}
+                        >
+                          <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
+                            Share on Web
+                          </button>
+                        </RWebShare>
+                      ) : (
+                        <>
+                          <button
+                            onClick={handleShareClick}
+                            className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
+                          >
+                            Share
+                          </button>
+                          <Popover
+                            id={elId}
+                            open={shareOpen}
+                            anchorEl={anchorEl}
+                            onClose={handleShareClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "left",
+                            }}
+                          >
+                            <div className="p-3">
+                              <FacebookShareButton url={fullPath}>
+                                <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </FacebookShareButton>
+                              <WhatsappShareButton url={fullPath}>
+                                <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </WhatsappShareButton>
+                              <TelegramShareButton url={fullPath}>
+                                <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </TelegramShareButton>
+                              <TwitterShareButton url={fullPath}>
+                                <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </TwitterShareButton>
+                              <EmailShareButton url={fullPath}>
+                                <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </EmailShareButton>
+                            </div>
+                          </Popover>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

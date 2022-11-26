@@ -8,7 +8,7 @@ function Loader() {
   useEffect(() => {
     const interval = setInterval(() => {
       router.push("/login");
-    }, 12000);
+    }, 18000);
     return () => clearInterval(interval);
   }, [provider]);
   return (

@@ -8,8 +8,10 @@ import {
   getDocs,
   addDoc,
   where,
+  onSnapshot,
   serverTimestamp,
   setDoc,
+  deleteDoc,
   updateDoc,
   query,
   orderBy,
@@ -41,6 +43,8 @@ import {
   TelegramIcon,
   TelegramShareButton,
 } from "react-share";
+import { isMobile } from "../../../utils/string";
+import { RWebShare } from "react-web-share";
 const Grifter = () => {
   const router = useRouter();
   const { influencerId, collectibleId } = router.query;
@@ -94,7 +98,11 @@ const Grifter = () => {
   const [influencerName, setInfluencerName] = useState<string>("");
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
+  const [myUsername, setMyUsername] = useState<string>("");
   const handleClose = () => setOpen(false);
+  const [likes, setLikes] = useState([]);
+  const [hasLiked, setHasLiked] = useState<boolean>(false);
+  const [isMobileBrowser, setIsMobileBrowser] = useState<boolean>(false);
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
@@ -140,7 +148,11 @@ const Grifter = () => {
             collectibleId.toString(),
             "transactions"
           );
-          const transactionsResponse = await getDocs(transactionsRef);
+          const transactionsQuery = query(
+            transactionsRef,
+            orderBy("timestamp", "desc")
+          );
+          const transactionsResponse = await getDocs(transactionsQuery);
           console.log(transactionsResponse);
           const transactionsData = transactionsResponse.docs.map((doc) => ({
             ...doc.data(),
@@ -289,6 +301,42 @@ const Grifter = () => {
     init();
   }, [influencerId, collectibleId, provider]);
 
+  useEffect(() => {
+    if (influencerId && provider && userName) {
+      onSnapshot(collection(db, "users", userName, "likes"), (snapshot) => {
+        setLikes(snapshot.docs);
+      });
+    }
+  }, [influencerId, db, userName, provider]);
+  useEffect(
+    () =>
+      setHasLiked(
+        likes.findIndex((follow) => follow.id === collectibleId.toString()) !==
+          -1
+      ),
+    [likes]
+  );
+
+  const likeCollectible = async () => {
+    try {
+      const likesRef = doc(
+        db,
+        "users",
+        userName,
+        "likes",
+        collectibleId.toString()
+      );
+      if (hasLiked) {
+        await deleteDoc(likesRef);
+      } else {
+        await setDoc(likesRef, {
+          nft: collectibleId.toString(),
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const handleMint = async () => {
     try {
       // const mintAddress = await mintNft(
@@ -636,96 +684,21 @@ const Grifter = () => {
           <div className="md:flex  mt-32">
             <div className="md:w-2/4">
               {/* <img src={"/assets/MakeOfferImg.png"} className="rounded-xl" alt="" /> */}
-              <div className="rounded-xl overflow-hidden mb-8">
-                {mediaType !== "video/mp4" &&
-                mediaType !== "video/ogg" &&
-                mediaType !== "video/webm" ? (
-                  <img src={mediaUrl} />
-                ) : (
-                  <video width="620" height="620" controls>
-                    <source src={mediaUrl} type="video/mp4" />
-                    some
-                  </video>
-                )}
-              </div>
-              <div className="mt-6">
-                <h1 className="font-bold text-xl">Description</h1>
-                <p className="text-gray-500 text-sm mt-2">{desc}</p>
-              </div>
-              <div className="mt-6">
-                <h1 className="font-bold text-xl">Details</h1>
-                <div className="rounded-xl mt-4 border-1 border border-black p-6">
-                  <div className="flex justify-between">
-                    <p>Contract address</p>
-                    <p className="justify-end">
-                      {mintAddr ? (
-                        <a
-                          href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
-                        >
-                          {truncate(mintAddr)}
-                        </a>
-                      ) : (
-                        "Be the first to mint it!"
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p>Blockchain</p>
-                    <p className="justify-end">
-                      <a href="">Solana</a>
-                    </p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p>Token Standard</p>
-                    <p className="justify-end">
-                      <a href="">Solana</a>
-                    </p>
-                  </div>
+              {mediaUrl && (
+                <div className="rounded-xl overflow-hidden mb-8">
+                  {mediaType !== "video/mp4" &&
+                  mediaType !== "video/ogg" &&
+                  mediaType !== "video/webm" ? (
+                    <img src={mediaUrl} />
+                  ) : (
+                    <video width="620" height="620" controls>
+                      <source src={mediaUrl} type="video/mp4" />
+                      some
+                    </video>
+                  )}
                 </div>
-              </div>
-            </div>
-
-            <div className="mt-0 md:ml-20 md:w-2/4">
-              <div className="flex gap-2 mb-3">
-                <button className="text-center text-gray-500 px-6 py-1 border border-1 hover:bg-[#635BFF] border-gray-500 rounded-md  hover:text-white">
-                  Follow
-                </button>
-                <button
-                  onClick={handleShareClick}
-                  className="text-center text-gray-500 px-6 py-1 border border-1 border-gray-500 rounded-md hover:bg-[#635BFF] hover:text-white"
-                >
-                  Share
-                </button>
-                <Popover
-                  id={elId}
-                  open={shareOpen}
-                  anchorEl={anchorEl}
-                  onClose={handleShareClose}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "left",
-                  }}
-                >
-                  <div className="p-3">
-                    <FacebookShareButton url={fullPath}>
-                      <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
-                    </FacebookShareButton>
-                    <WhatsappShareButton url={fullPath}>
-                      <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
-                    </WhatsappShareButton>
-                    <TelegramShareButton url={fullPath}>
-                      <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
-                    </TelegramShareButton>
-                    <TwitterShareButton url={fullPath}>
-                      <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
-                    </TwitterShareButton>
-                    <EmailShareButton url={fullPath}>
-                      <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
-                    </EmailShareButton>
-                  </div>
-                </Popover>
-              </div>
-              <div>
+              )}
+              <div className=" md:hidden">
                 <h1 className="text-4xl font-bold">{title}</h1>
                 <div className="flex py-4 border-b-2">
                   <div className="flex mr-6 items-center">
@@ -754,6 +727,149 @@ const Grifter = () => {
                       </p>
                     </div>
                   )}
+                </div>
+              </div>
+              <div className="hidden md:block">
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">Description</h1>
+                  <p className="text-gray-500 text-sm mt-2">{desc}</p>
+                </div>
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">Details</h1>
+                  <div className="rounded-xl mt-4 border-1 border border-black p-6">
+                    <div className="flex justify-between">
+                      <p>Contract address</p>
+                      <p className="justify-end">
+                        {mintAddr ? (
+                          <a
+                            href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
+                          >
+                            {truncate(mintAddr)}
+                          </a>
+                        ) : (
+                          "Be the first to mint it!"
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>Blockchain</p>
+                      <p className="justify-end">
+                        <a href="">Solana</a>
+                      </p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>Token Standard</p>
+                      <p className="justify-end">
+                        <a href="">Solana</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className=" md:ml-20 md:w-2/4 mt-6 md:mt-0">
+              <div className="flex gap-2 mb-3">
+                {hasLiked ? (
+                  <button
+                    onClick={likeCollectible}
+                    className="text-center text-white px-6 py-1 border border-1 bg-[#635BFF] border-gray-500 rounded-md  hover:text-white"
+                  >
+                    Unfollow
+                  </button>
+                ) : (
+                  <button
+                    onClick={likeCollectible}
+                    className="text-center text-gray-500 px-6 py-1 border border-1 hover:bg-[#635BFF] border-gray-500 rounded-md  hover:text-white"
+                  >
+                    Follow
+                  </button>
+                )}
+                {isMobileBrowser ? (
+                  <RWebShare
+                    data={{
+                      text: "Web Share - Ayoo",
+                      url: fullPath,
+                      title: "Ayoo",
+                    }}
+                    onClick={() => console.log("shared successfully!")}
+                  >
+                    <button className="text-center text-gray-500 px-6 py-1 border border-1 border-gray-500 rounded-md hover:bg-[#635BFF] hover:text-white">
+                      Share
+                    </button>
+                  </RWebShare>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleShareClick}
+                      className="text-center text-gray-500 px-6 py-1 border border-1 border-gray-500 rounded-md hover:bg-[#635BFF] hover:text-white"
+                    >
+                      Share
+                    </button>
+                    <Popover
+                      id={elId}
+                      open={shareOpen}
+                      anchorEl={anchorEl}
+                      onClose={handleShareClose}
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "left",
+                      }}
+                    >
+                      <div className="p-3">
+                        <FacebookShareButton url={fullPath}>
+                          <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </FacebookShareButton>
+                        <WhatsappShareButton url={fullPath}>
+                          <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </WhatsappShareButton>
+                        <TelegramShareButton url={fullPath}>
+                          <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </TelegramShareButton>
+                        <TwitterShareButton url={fullPath}>
+                          <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </TwitterShareButton>
+                        <EmailShareButton url={fullPath}>
+                          <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </EmailShareButton>
+                      </div>
+                    </Popover>
+                  </>
+                )}
+              </div>
+              <div>
+                <div className="hidden md:block">
+                  <h1 className="text-4xl font-bold">{title}</h1>
+                  <div className="flex py-4 border-b-2">
+                    <div className="flex mr-6 items-center">
+                      <img
+                        src={"/assets/Ellips.png"}
+                        className="h-8 w-8"
+                        alt=""
+                      />
+
+                      <p className="ml-2 font-semibold">
+                        Artist{" "}
+                        <Link href={`/pages/${artist}`}>{influencerName}</Link>
+                      </p>
+                    </div>
+
+                    {status !== "offchain" && (
+                      <div className="flex mr-6 items-center">
+                        <img
+                          src={"/assets/Ellips.png"}
+                          className="h-8 w-8"
+                          alt=""
+                        />
+                        <p className="ml-2 font-semibold">
+                          Owner{" "}
+                          <Link href={`/pages/${owner}`}>
+                            {ownerDisplayName}
+                          </Link>
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {loadingProcess && (
                   <div className="my-2 flex justify-center">
@@ -800,40 +916,59 @@ const Grifter = () => {
                     <>
                       {userName === influencerId.toString() ? (
                         <>
-                          <button
-                            onClick={handleShareClick}
-                            className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                          >
-                            Share with your fans
-                          </button>
-                          <Popover
-                            id={elId}
-                            open={shareOpen}
-                            anchorEl={anchorEl}
-                            onClose={handleShareClose}
-                            anchorOrigin={{
-                              vertical: "bottom",
-                              horizontal: "left",
-                            }}
-                          >
-                            <div className="p-3">
-                              <FacebookShareButton url={fullPath}>
-                                <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
-                              </FacebookShareButton>
-                              <WhatsappShareButton url={fullPath}>
-                                <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
-                              </WhatsappShareButton>
-                              <TelegramShareButton url={fullPath}>
-                                <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
-                              </TelegramShareButton>
-                              <TwitterShareButton url={fullPath}>
-                                <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
-                              </TwitterShareButton>
-                              <EmailShareButton url={fullPath}>
-                                <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
-                              </EmailShareButton>
-                            </div>
-                          </Popover>
+                          {isMobileBrowser ? (
+                            <RWebShare
+                              data={{
+                                text: "Web Share - Ayoo",
+                                url: fullPath,
+                                title: "Ayoo",
+                              }}
+                              onClick={() =>
+                                console.log("shared successfully!")
+                              }
+                            >
+                              <button className="border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold">
+                                Share
+                              </button>
+                            </RWebShare>
+                          ) : (
+                            <>
+                              <button
+                                onClick={handleShareClick}
+                                className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                              >
+                                Share with your fans
+                              </button>
+                              <Popover
+                                id={elId}
+                                open={shareOpen}
+                                anchorEl={anchorEl}
+                                onClose={handleShareClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "left",
+                                }}
+                              >
+                                <div className="p-3">
+                                  <FacebookShareButton url={fullPath}>
+                                    <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                  </FacebookShareButton>
+                                  <WhatsappShareButton url={fullPath}>
+                                    <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                  </WhatsappShareButton>
+                                  <TelegramShareButton url={fullPath}>
+                                    <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                  </TelegramShareButton>
+                                  <TwitterShareButton url={fullPath}>
+                                    <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                  </TwitterShareButton>
+                                  <EmailShareButton url={fullPath}>
+                                    <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                                  </EmailShareButton>
+                                </div>
+                              </Popover>
+                            </>
+                          )}
                         </>
                       ) : (
                         <>
@@ -1019,7 +1154,43 @@ const Grifter = () => {
                   )}
                 </div>
               </div>
-
+              <div className="md:hidden">
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">Description</h1>
+                  <p className="text-gray-500 text-sm mt-2">{desc}</p>
+                </div>
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">Details</h1>
+                  <div className="rounded-xl mt-4 border-1 border border-black p-6">
+                    <div className="flex justify-between">
+                      <p>Contract address</p>
+                      <p className="justify-end">
+                        {mintAddr ? (
+                          <a
+                            href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
+                          >
+                            {truncate(mintAddr)}
+                          </a>
+                        ) : (
+                          "Be the first to mint it!"
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>Blockchain</p>
+                      <p className="justify-end">
+                        <a href="">Solana</a>
+                      </p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p>Token Standard</p>
+                      <p className="justify-end">
+                        <a href="">Solana</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div className="mt-6">
                 <h1 className="font-bold text-xl">History</h1>
                 <div className="mt-4 max-h-96 overflow-y-scroll">
@@ -1031,9 +1202,33 @@ const Grifter = () => {
                             <img src="/assets/ellips.png" />
                           </div>
                           <div className=" text-md">
-                            {transaction.from} listed the token for{" "}
+                            <p className="">
+                              {transaction.from} listed the token for{" "}
+                              {transaction.price}
+                              <img
+                                src="/assets/usdc.webp"
+                                className="w-4 h-4 ml-1 inline-block"
+                              />
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {dateFormat(
+                                transaction.timestamp.toDate(),
+                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {transaction.type === "buy" && (
+                        <div className="flex items-center mb-3" key={i}>
+                          <div className="mr-4">
+                            <img src="/assets/ellips.png" />
+                          </div>
+                          <div className=" text-md">
+                            {transaction.to} boughts the token
+                            {/*  for{" "}
                             {transaction.price}
-                            usdc
+                            usdc */}
                             <p className="text-xs text-gray-500 mt-1">
                               {dateFormat(
                                 transaction.timestamp.toDate(),
@@ -1096,6 +1291,48 @@ const Grifter = () => {
               )}
             </div>
           </div>
+          <div className="my-5 ">
+            <h1 className=" font-bold mb-6 text-2xl">How AYOO works</h1>
+            <div className="grid gap-4 grid-rows-3 md:grid-rows-1 md:grid-cols-3">
+              <div className="flex md:block">
+                <div className="border-2 mt-3 md:mt-0 mr-4 md:mr-0 w-9 h-9 flex items-center justify-center border-black rounded-full">
+                  <span className="font-bold text-lg">1</span>
+                </div>
+                <div className="flex-1">
+                  <h1 className="font-bold mt-2 mb-3">
+                    Support your favourite content creators with their NFT!
+                  </h1>
+                  <p>
+                    Cheer on creators as they build communities around their
+                    work. The best part? No crypto wallets necessary
+                  </p>
+                </div>
+              </div>
+              <div className="flex md:block">
+                <div className="border-2 mt-3 md:mt-0 mr-4 md:mr-0 w-9 h-9 flex items-center justify-center border-black rounded-full">
+                  <span className="font-bold text-lg">2</span>
+                </div>
+                <div className="flex-1">
+                  <h1 className="font-bold mt-2 mb-3">Unlock VIP benefits</h1>
+                  <p>
+                    Create meaningful connections with content creators and
+                    like-minded fans
+                  </p>
+                </div>
+              </div>
+              <div className="flex md:block">
+                <div className="border-2 mt-3 md:mt-0 mr-4 md:mr-0 w-9 h-9 flex items-center justify-center border-black rounded-full">
+                  <span className="font-bold text-lg">3</span>
+                </div>
+                <div className="flex-1">
+                  <h1 className="font-bold mt-2 mb-3">
+                    Buy and sell music NFTs effortlessly
+                  </h1>
+                  <p>Trade and earn profit on creator’s NFT</p>
+                </div>
+              </div>
+            </div>
+          </div>
           <Modal
             open={open}
             onClose={handleClose}
@@ -1138,40 +1375,57 @@ const Grifter = () => {
                   >
                     View NFT
                   </a>
-                  <button
-                    onClick={handleShareClick}
-                    className="py-2 rounded-full mt-2 font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white"
-                  >
-                    Share your NFT
-                  </button>
-                  <Popover
-                    id={elId}
-                    open={shareOpen}
-                    anchorEl={anchorEl}
-                    onClose={handleShareClose}
-                    anchorOrigin={{
-                      vertical: "bottom",
-                      horizontal: "left",
-                    }}
-                  >
-                    <div className="p-3">
-                      <FacebookShareButton url={fullPath}>
-                        <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
-                      </FacebookShareButton>
-                      <WhatsappShareButton url={fullPath}>
-                        <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
-                      </WhatsappShareButton>
-                      <TelegramShareButton url={fullPath}>
-                        <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
-                      </TelegramShareButton>
-                      <TwitterShareButton url={fullPath}>
-                        <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
-                      </TwitterShareButton>
-                      <EmailShareButton url={fullPath}>
-                        <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
-                      </EmailShareButton>
-                    </div>
-                  </Popover>
+                  {isMobileBrowser ? (
+                    <RWebShare
+                      data={{
+                        text: "Web Share - Ayoo",
+                        url: fullPath,
+                        title: "Ayoo",
+                      }}
+                      onClick={() => console.log("shared successfully!")}
+                    >
+                      <button className="py-2 mt-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
+                        Share your NFT
+                      </button>
+                    </RWebShare>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleShareClick}
+                        className="py-2 mt-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white"
+                      >
+                        Share your NFT
+                      </button>
+                      <Popover
+                        id={elId}
+                        open={shareOpen}
+                        anchorEl={anchorEl}
+                        onClose={handleShareClose}
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                      >
+                        <div className="p-3">
+                          <FacebookShareButton url={fullPath}>
+                            <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </FacebookShareButton>
+                          <WhatsappShareButton url={fullPath}>
+                            <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </WhatsappShareButton>
+                          <TelegramShareButton url={fullPath}>
+                            <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </TelegramShareButton>
+                          <TwitterShareButton url={fullPath}>
+                            <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </TwitterShareButton>
+                          <EmailShareButton url={fullPath}>
+                            <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </EmailShareButton>
+                        </div>
+                      </Popover>
+                    </>
+                  )}
                 </div>
 
                 <div className="grid grid-rows-3 gap-2"></div>

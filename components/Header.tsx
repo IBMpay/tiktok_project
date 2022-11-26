@@ -44,7 +44,7 @@ function Header() {
   };
   return (
     <div className="mb-10">
-      <div className=" fixed top-0 left-0 right-0 " style={{ zIndex: 100000 }}>
+      <div className=" fixed top-0 left-0 right-0 " style={{ zIndex: 1 }}>
         <div className="flex py-2 border-b  px-8  border-gray-200 bg-white justify-between">
           <div className="flex">
             <div className="cursor-pointer py-2">

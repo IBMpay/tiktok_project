@@ -5,3 +5,9 @@ export const truncate = (longString: String, limit = 10) => {
 
   return longString;
 };
+
+export function isMobile() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}

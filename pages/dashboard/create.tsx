@@ -294,18 +294,23 @@ const Create = () => {
                 </p>
               )}
             </div>
-            {reviewMode ? (
+            {reviewMode || videoUrl !== "" ? (
               <div className="mt-4 mb-6 px-8">
-                <div className=" w-full h-[32rem] rounded-2xl my-10 border border-black">
+                <div className=" w-full h-[32rem] rounded-2xl my-4 border border-black">
                   {mediaType === "video/mp4" ? (
-                    <div className="flex justify-center relative -top-6">
+                    <div className="flex justify-center max-h-full max-w-full relative">
                       <video width="320" height="620" controls>
                         <source src={videoUrl} type="video/mp4" />
                         sample
                       </video>
                     </div>
                   ) : (
-                    <img className="w-full h-full" src={videoUrl} />
+                    // <div className="flex justify-center">
+                    <img
+                      className="max-w-full max-h-full mx-auto"
+                      src={videoUrl}
+                    />
+                    // </div>
                   )}
                 </div>
               </div>
@@ -358,7 +363,17 @@ const Create = () => {
                 </h1>
               </div>
             )}
-
+            {videoUrl !== "" && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setVideoUrl("")}
+                  className="flex text-lg font-semibold bg-gray-100 mt-3 hover:bg-[#635BFF] transition-none hover:text-white rounded-md px-6 py-2"
+                >
+                  <CloudArrowUpIcon className="h-5 w-5 mt-1 mr-2 transition-none" />
+                  <span>change media</span>
+                </button>
+              </div>
+            )}
             <div>
               {/* <form> */}
               <div className="flex flex-col">
