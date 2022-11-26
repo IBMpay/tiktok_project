@@ -1,10 +1,19 @@
-import { Container } from "@mui/material";
+import { Container, Popover } from "@mui/material";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Button from "../../../components/Button";
 import NFTGridItem from "../../../components/NFTGridItem";
 import NFTPostItem from "../../../components/NFTPostItem";
-import { collection, doc, getDoc, getDocs } from "@firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  getDocs,
+  updateDoc,
+  setDoc,
+  deleteDoc,
+} from "@firebase/firestore";
 import { Web3Auth } from "@web3auth/web3auth";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { db } from "../../../firebase-config";
@@ -27,6 +36,18 @@ import Link from "next/link";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import NFTPostCollected from "../../../components/NFTPostCollected";
 import Image from "next/image";
+import {
+  FacebookShareButton,
+  FacebookIcon,
+  WhatsappIcon,
+  WhatsappShareButton,
+  TwitterShareButton,
+  TwitterIcon,
+  EmailShareButton,
+  EmailIcon,
+  TelegramIcon,
+  TelegramShareButton,
+} from "react-share";
 
 const Profile = () => {
   const router = useRouter();
@@ -62,14 +83,30 @@ const Profile = () => {
   const [isInfluencer, setIsInfluencer] = useState<boolean>(false);
   const [isPageOwner, setIsPageOwner] = useState<boolean>(false);
   const [path, setPath] = useState<string>("");
+  const [myUsername, setMyUsername] = useState<string>("");
   const [showCollected, setShowCollected] = useState<boolean>(false);
+  const [fullPath, setFullPath] = useState<string>("");
+  const [follows, setFollows] = useState([]);
+  const [hasFollowed, setHasFollowed] = useState<boolean>(false);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
+    null
+  );
+  const handleShareClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
+  const handleShareClose = () => {
+    setAnchorEl(null);
+  };
+  const shareOpen = Boolean(anchorEl);
+  const elId = shareOpen ? "simple-popover" : undefined;
   console.log(influencerId);
   useEffect(() => {
     const init = async () => {
       // if (!isConnected && !isConnecting) router.push("/login");
       if (influencerId && provider) {
         try {
+          setFullPath(`${window.location.origin}${router.asPath}`);
           setPath(`/pages/${influencerId}`);
           console.log("the pubki: ", connection);
           const influencerUsername = influencerId.toString();
@@ -79,6 +116,10 @@ const Profile = () => {
 
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
+            const user = await getUser();
+            const myUName = user.email.split("@", 1)[0].replace(".", "");
+            console.log("my uuname: ", myUName);
+            setMyUsername(myUName);
             const collectedRef = collection(
               usersRef,
               influencerUsername,
@@ -97,11 +138,9 @@ const Profile = () => {
             setUsername(influencerUsername);
 
             setDescription(userData.bioDescription);
-            if (userData.followerCount)
-              setFollowersCount(userData.followerCount);
+            if (userData.followers) setFollowersCount(userData.followers);
 
-            if (userData.followingCount)
-              setFollowingCount(userData.followingCount);
+            if (userData.followings) setFollowingCount(userData.followings);
             setAvatarUrl(userData.avatarUrl);
             setWalletAddress(userData.wallet);
             setFullName(userData.name);
@@ -117,7 +156,89 @@ const Profile = () => {
     };
     init();
   }, [influencerId, provider]);
+  useEffect(() => {
+    if (influencerId && provider && myUsername) {
+      console.log("my username: ", myUsername);
+      onSnapshot(collection(db, "users", myUsername, "follows"), (snapshot) => {
+        setFollows(snapshot.docs);
+        console.log("snap:", snapshot.docs);
+      });
+    }
+  }, [influencerId, db, myUsername, provider]);
+  useEffect(() => {
+    if (influencerId && provider) {
+      console.log("new new new new ");
+      onSnapshot(doc(db, "users", influencerId.toString()), (snapshot) => {
+        // if (snapshot.data().followers)
+        setFollowersCount(snapshot.data().followers);
+        // if (snapshot.data().followings)
+        setFollowingCount(snapshot.data().followings);
+      });
+    }
+  }, [follows, influencerId]);
 
+  useEffect(
+    () =>
+      setHasFollowed(
+        follows.findIndex((follow) => follow.id === influencerId.toString()) !==
+          -1
+      ),
+    [follows]
+  );
+
+  const followInfluencer = async () => {
+    try {
+      const followsRef = doc(
+        db,
+        "users",
+        myUsername,
+        "follows",
+        influencerId.toString()
+      );
+      const userRef = doc(db, "users", myUsername);
+      const influencerRef = doc(db, "users", influencerId.toString());
+      const userSnap = await getDoc(userRef);
+      const myFollowings = userSnap.data().followings;
+      if (hasFollowed) {
+        console.log({
+          curFol: followersCount,
+          curFolwngs: myFollowings,
+          followers: followersCount - 1,
+          followings: myFollowings - 1,
+        });
+        await updateDoc(influencerRef, {
+          followers: followersCount - 1,
+        });
+        setFollowersCount(followersCount - 1);
+
+        await updateDoc(userRef, {
+          followings: myFollowings - 1,
+        });
+
+        await deleteDoc(followsRef);
+      } else {
+        console.log({
+          curFol: followersCount,
+          curFolwngs: myFollowings,
+          followers: followersCount + 1,
+          followings: myFollowings + 1,
+        });
+        await updateDoc(influencerRef, {
+          followers: followersCount + 1,
+        });
+
+        await updateDoc(userRef, {
+          followings: myFollowings + 1,
+        });
+
+        await setDoc(followsRef, {
+          username: influencerId.toString(),
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <>
       {!isConnecting && provider ? (
@@ -169,12 +290,56 @@ const Profile = () => {
                     </Link>
                   ) : (
                     <div className="flex gap-2">
-                      <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
-                        Follow
-                      </button>
-                      <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
+                      {hasFollowed ? (
+                        <button
+                          onClick={followInfluencer}
+                          className="text-center  px-6 border border-1 border-gray-500 rounded-md w-full bg-[#635BFF] text-white"
+                        >
+                          Unfollow
+                        </button>
+                      ) : (
+                        <button
+                          onClick={followInfluencer}
+                          className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
+                        >
+                          Follow
+                        </button>
+                      )}
+
+                      <button
+                        onClick={handleShareClick}
+                        className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
+                      >
                         Share
                       </button>
+                      <Popover
+                        id={elId}
+                        open={shareOpen}
+                        anchorEl={anchorEl}
+                        onClose={handleShareClose}
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                      >
+                        <div className="p-3">
+                          <FacebookShareButton url={fullPath}>
+                            <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </FacebookShareButton>
+                          <WhatsappShareButton url={fullPath}>
+                            <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </WhatsappShareButton>
+                          <TelegramShareButton url={fullPath}>
+                            <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </TelegramShareButton>
+                          <TwitterShareButton url={fullPath}>
+                            <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </TwitterShareButton>
+                          <EmailShareButton url={fullPath}>
+                            <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                          </EmailShareButton>
+                        </div>
+                      </Popover>
                     </div>
                   )}
                 </div>

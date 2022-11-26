@@ -108,6 +108,7 @@ const Create = () => {
     verifierId: "",
   });
   const router = useRouter();
+  const { onboarding } = router.query;
   const [createdCollectibleId, setCreatedCollectibleId] = useState<string>("");
   const [modalOpen, setModalOpen] = useState(false);
   const handleModalOpen = () => setModalOpen(true);
@@ -136,6 +137,21 @@ const Create = () => {
     try {
       console.log(e.target.files);
       const mediaFile = e.target.files[0];
+      console.log("type is: ", mediaFile.type);
+      if (
+        mediaFile.type !== "video/mp4" &&
+        mediaFile.type !== "video/ogg" &&
+        mediaFile.type !== "video/webm" &&
+        mediaFile.type !== "image/jpeg" &&
+        mediaFile.type !== "image/png" &&
+        mediaFile.type !== "image/webp" &&
+        mediaFile.type !== "image/gif"
+      ) {
+        alert(
+          "Your file type is not supported. Please upload file in JPEG, PNG, WEBP, GIF, MP4, WEBM, and OGG!"
+        );
+        return;
+      }
       setMediaType(mediaFile.type);
       setUploadLoading(true);
       console.log("loading", uploadLoading);
@@ -173,16 +189,17 @@ const Create = () => {
       setLoading(true);
       const user = await getUser();
       const username = user.email.split("@", 1)[0].replace(".", "");
-      console.log("something to upload", {
-        media_url: videoUrl,
-        media_type: mediaType,
-        external_url: "http://ayoo.site",
-        title: title,
-        royalties: royalties,
-        owner: creator,
-        description: description,
-      });
+      // console.log("something to upload", {
+      //   media_url: videoUrl,
+      //   media_type: mediaType,
+      //   external_url: "http://ayoo.site",
+      //   title: title,
+      //   royalties: royalties,
+      //   owner: creator,
+      //   description: description,
+      // });
       setMyUserName(username);
+      const desc = description !== "" ? description : "no description";
       const response = await fetch("https://ayoo-arweave.herokuapp.com/", {
         method: "POST",
         body: JSON.stringify({
@@ -192,7 +209,7 @@ const Create = () => {
           title: title,
           royalties: royalties,
           owner: creator,
-          description: description,
+          description: desc,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -200,29 +217,29 @@ const Create = () => {
       });
       if (response.status === 200) {
         const data = await response.json();
-        console.log("the vid: ", username);
-        console.log(data);
-        console.log("the data", data);
+        // console.log("the vid: ", username);
+        // console.log(data);
+        // console.log("the data", data);
         const seed = Math.floor(100000 + Math.random() * 900000);
-        console.log(seed);
-        console.log("something to upload: ", {
-          title,
-          description,
-          videoUrl,
-          mediaType,
-          metadataUrl: data.metadata,
-          price,
-          royalties,
-          status: "offchain",
-        });
+        // console.log(seed);
+        // console.log("something to upload: ", {
+        //   title,
+        //   description,
+        //   videoUrl,
+        //   mediaType,
+        //   metadataUrl: data.metadata,
+        //   price,
+        //   royalties,
+        //   status: "offchain",
+        // });
         const hashtagsArray = hashtags.replace(/ +/g, "").split(",");
         // console.log(mediaUpload.type);
-        console.log(hashtagsArray);
+        // console.log(hashtagsArray);
         await setDoc(
           doc(db, "users", username, "collectibles", seed.toString()),
           {
             title,
-            description,
+            description: desc,
             videoUrl,
             mediaType,
             hashtags: hashtagsArray,
@@ -233,15 +250,16 @@ const Create = () => {
           }
         );
         setCreatedCollectibleId(seed.toString());
-        setModalOpen(true);
+        router.push(`/pages/${username}?created=${seed}`);
+        // setModalOpen(true);
         // setOpen(true);
       } else {
-        setSnackbarMessage("Please try again!");
+        setSnackbarMessage("Network busy, Please try again!");
         setOpen(true);
       }
     } catch (error) {
       console.log(error);
-      setSnackbarMessage("Please try again!");
+      setSnackbarMessage("Network busy, Please try again!");
       setOpen(true);
     } finally {
       setLoading(false);
@@ -348,9 +366,9 @@ const Create = () => {
                   <label>
                     <p className="mb-1">
                       <span className="uppercase font-bold">title</span>
-                      <span className="text-gray-400 font-semibold ml-2">
+                      {/* <span className="text-gray-400 font-semibold ml-2">
                         (optional)
-                      </span>
+                      </span> */}
                     </p>
                   </label>
                   {reviewMode ? (
@@ -369,6 +387,11 @@ const Create = () => {
                   <label>
                     <p className="mb-1">
                       <span className="uppercase font-bold">description</span>
+                      {!reviewMode && (
+                        <span className="text-gray-400 font-semibold ml-2">
+                          (optional)
+                        </span>
+                      )}
                     </p>
                   </label>
                   {reviewMode ? (
@@ -386,9 +409,11 @@ const Create = () => {
                   <label>
                     <p className="mb-1">
                       <span className="uppercase font-bold">hashtags</span>
-                      <span className="text-gray-400 font-semibold ml-2">
-                        (optional)
-                      </span>
+                      {!reviewMode && (
+                        <span className="text-gray-400 font-semibold ml-2">
+                          (optional)
+                        </span>
+                      )}
                     </p>
                   </label>
                   {reviewMode ? (
@@ -406,13 +431,18 @@ const Create = () => {
                         ))}
                     </p>
                   ) : (
-                    <input
-                      type="text"
-                      placeholder="Name your NFT"
-                      className="w-full rounded-full pl-5 py-2 bg-gray-100"
-                      value={hashtags}
-                      onChange={(e) => setHashtags(e.target.value)}
-                    />
+                    <>
+                      <input
+                        type="text"
+                        placeholder="Name your NFT"
+                        className="w-full rounded-full pl-5 py-2 bg-gray-100"
+                        value={hashtags}
+                        onChange={(e) => setHashtags(e.target.value)}
+                      />
+                      <span className="text-xs text-gray-600">
+                        Enter your hashtags separated by commas ,
+                      </span>
+                    </>
                   )}
                 </div>
                 {/* <div className="mb-6">
@@ -488,9 +518,6 @@ const Create = () => {
                         className="h-4 w-4 right-3 top-3 absolute"
                       />
                       <p className="absolute left-4 top-2 font-bold">$</p>
-                      <span className="text-xs text-gray-600">
-                        FYI, there&apos;s a 8% service fee for sales on AYOO NFT
-                      </span>
                     </div>
                   )}
                 </div>
@@ -512,9 +539,13 @@ const Create = () => {
                       <p>10%</p>
                       <p>of future sales</p>
                     </div>
-                    <span className="text-xs text-gray-600">
-                      Right now, AYOO NFT royalties are fixed at 10%
-                    </span>
+                    {!reviewMode && (
+                      <span className="text-xs text-gray-600">
+                        Right now, AYOO NFT royalties are fixed at 10%, So you
+                        will have 10% recurring revenue when sales happen on
+                        secondary market.
+                      </span>
+                    )}
                   </>
                 </div>
                 {reviewMode && (
@@ -554,11 +585,20 @@ const Create = () => {
                       Review
                     </button>
                     <div className="mt-3">
-                      <Link href={`/pages/${myUserName}`}>
-                        <button className="mt-3  text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white px-3 w-full pb-3 pt-3 rounded-full font-semibold">
-                          I will do it later
+                      {onboarding ? (
+                        <Link href={`/pages/${myUserName}`}>
+                          <button className="mt-3  text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white px-3 w-full pb-3 pt-3 rounded-full font-semibold">
+                            I will do it later
+                          </button>
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={router.back}
+                          className="mt-3  text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                        >
+                          Back
                         </button>
-                      </Link>
+                      )}
                     </div>
                   </>
                 )}
@@ -591,65 +631,6 @@ const Create = () => {
             </div>
           </div>
 
-          <Modal
-            open={modalOpen}
-            onClose={handleModalClose}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white drop-shadow-xl rounded-3xl p-4">
-              <div className="relative -top-12 px-8">
-                <div className="flex justify-center ">
-                  {mediaType === "video/mp4" ? (
-                    <div className="flex justify-center relative -top-6">
-                      <video
-                        width="128"
-                        height="128"
-                        className="h-32 w-32 rounded-xl justify-centers"
-                      >
-                        <source src={videoUrl} type="video/mp4" />
-                        sample
-                      </video>
-                    </div>
-                  ) : (
-                    <img
-                      className="h-32 w-32 rounded-xl justify-centers"
-                      src={videoUrl}
-                    />
-                  )}
-                </div>
-
-                <div className="mt-4">
-                  <h1 className="capitalize text-3xl font-bold text-center">
-                    congratulations!
-                  </h1>
-                  <p className="text-center  mt-2">you created an NFT.</p>
-                </div>
-                <div className="grid grid-rows-1 mb-6 mt-2">
-                  <a
-                    href={`/pages/${myUserName}/${createdCollectibleId}`}
-                    className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold text-center"
-                  >
-                    View NFT
-                  </a>
-                </div>
-                <div className="relative mb-4">
-                  <div className="absolute border-t border-black w-full"></div>
-                  <p className="text-center relative -top-3">
-                    <span className="bg-white px-2 font-semibold">or</span>
-                  </p>
-                  <p className="text-center text-sm text-gray-700 font-bold">
-                    More you can do
-                  </p>
-                </div>
-                <div className="grid grid-rows-3 gap-2">
-                  <button className="py-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
-                    Share your NFT
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Modal>
           <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
             <Alert
               onClose={handleClose}

@@ -1,4 +1,4 @@
-import { Container, Modal } from "@mui/material";
+import { Container, Modal, Popover } from "@mui/material";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import {
@@ -29,6 +29,18 @@ import NFTPostItem from "../../../components/NFTPostItem";
 import Header from "../../../components/Header";
 import { Web3Auth } from "@web3auth/web3auth";
 import axios from "axios";
+import {
+  FacebookShareButton,
+  FacebookIcon,
+  WhatsappIcon,
+  WhatsappShareButton,
+  TwitterShareButton,
+  TwitterIcon,
+  EmailShareButton,
+  EmailIcon,
+  TelegramIcon,
+  TelegramShareButton,
+} from "react-share";
 const Grifter = () => {
   const router = useRouter();
   const { influencerId, collectibleId } = router.query;
@@ -77,9 +89,26 @@ const Grifter = () => {
   const [usdcBalance, setUsdcBalance] = useState(0);
   const [notEnoughUsdc, setNotEnoughUsdc] = useState<boolean>(false);
   const [notEnoughSol, setNotEnoughSol] = useState<boolean>(false);
+  const [hashtags, setHashtags] = useState([]);
+  const [ownerDisplayName, setOwnerDisplayName] = useState<string>("");
+  const [influencerName, setInfluencerName] = useState<string>("");
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
+    null
+  );
+  const [fullPath, setFullPath] = useState<string>("");
+
+  const handleShareClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleShareClose = () => {
+    setAnchorEl(null);
+  };
+  const shareOpen = Boolean(anchorEl);
+  const elId = shareOpen ? "simple-popover" : undefined;
   // const router = useRouter();
   const { mintNft, listNft, delistNft, buyNft, transactionPending } =
     useMarket();
@@ -89,11 +118,13 @@ const Grifter = () => {
 
       if (influencerId && collectibleId && provider) {
         try {
+          setFullPath(`${window.location.origin}${router.asPath}`);
           setPath(router.asPath);
           const influencerUsername = influencerId.toString();
           const user = await getUser();
           const username = user.email.split("@", 1)[0].replace(".", "");
           setUserName(username);
+          // console.log("influencer")
           const collectibleRef = doc(
             db,
             "users",
@@ -122,6 +153,8 @@ const Grifter = () => {
           const influencerRef = doc(db, "users", influencerId.toString());
           const userData = (await getDoc(influencerRef)).data();
           const influencerWalletAddress = userData.wallet;
+          const influencerDisplayName = userData.name;
+          setInfluencerName(influencerDisplayName);
           setInfluencerWallet(influencerWalletAddress);
           console.log("influencer wallet: ", influencerWallet);
 
@@ -139,13 +172,18 @@ const Grifter = () => {
           const relatedCollectiblesResponse = await getDocs(
             relatedCollectibles
           );
+          console.log("helooooooo");
           const relatedCollectiblesData = relatedCollectiblesResponse.docs.map(
             (doc) => ({
               ...doc.data(),
               id: doc.id,
             })
           );
-          setRelatedItems(relatedCollectiblesData);
+          console.log("this post: ", relatedCollectiblesData);
+          const relatedDocs = relatedCollectiblesData.filter(
+            (item) => item.id !== collectibleId
+          );
+          setRelatedItems(relatedDocs);
           const userSnap = await getDoc(collectibleRef);
           if (userSnap.exists()) {
             const collectiblesSnap = await getDoc(collectibleRef);
@@ -159,9 +197,21 @@ const Grifter = () => {
             setPrice(+collectiblesData.price * 1_000_000);
             setCurrentPrice(collectiblesData.price);
             setLastSalePrice(collectiblesData.lastSalePrice);
+            if (
+              collectiblesData.hashtags &&
+              collectiblesData.hashtags.length !== 0
+            )
+              setHashtags(collectiblesData.hashtags);
+
             if (collectiblesData.status !== "offchain") {
               setMintAddr(collectiblesData.mint);
               setOwner(collectiblesData.owner);
+              if (collectiblesData.owner) {
+                const ownerRef = doc(db, "users", collectiblesData.owner);
+                const ownerSnap = await getDoc(ownerRef);
+                setOwnerDisplayName(ownerSnap.data().name);
+              }
+              // setOwner(collectiblesData.owner);
             }
             console.log("the video is : ", collectiblesData.videoUrl);
             setMediaUrl(collectiblesData.videoUrl);
@@ -216,13 +266,15 @@ const Grifter = () => {
               solResponse.data[0].result.value / 1_000_000_000
             ).toFixed(3);
             setNotEnoughSol(solBal < 0.03);
+            const nftPrice = +collectiblesData.price;
+            console.log("the price is: ", nftPrice);
             switch (collectiblesData.status) {
               case "offchain":
-                if (username !== influencerId && price >= usdcBal)
+                if (username !== influencerId && nftPrice >= usdcBal)
                   setNotEnoughUsdc(true);
                 break;
               case "listed":
-                if (collectiblesData.owner !== username && price >= usdcBal)
+                if (collectiblesData.owner !== username && nftPrice >= usdcBal)
                   setNotEnoughUsdc(true);
                 break;
             }
@@ -606,11 +658,15 @@ const Grifter = () => {
                   <div className="flex justify-between">
                     <p>Contract address</p>
                     <p className="justify-end">
-                      <a
-                        href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
-                      >
-                        {truncate(mintAddr)}
-                      </a>
+                      {mintAddr ? (
+                        <a
+                          href={`https://explorer.solana.com/address/${mintAddr}/metadata?cluster=devnet`}
+                        >
+                          {truncate(mintAddr)}
+                        </a>
+                      ) : (
+                        "Be the first to mint it!"
+                      )}
                     </p>
                   </div>
                   <div className="flex justify-between">
@@ -634,9 +690,40 @@ const Grifter = () => {
                 <button className="text-center text-gray-500 px-6 py-1 border border-1 hover:bg-[#635BFF] border-gray-500 rounded-md  hover:text-white">
                   Follow
                 </button>
-                <button className="text-center text-gray-500 px-6 py-1 border border-1 border-gray-500 rounded-md hover:bg-[#635BFF] hover:text-white">
+                <button
+                  onClick={handleShareClick}
+                  className="text-center text-gray-500 px-6 py-1 border border-1 border-gray-500 rounded-md hover:bg-[#635BFF] hover:text-white"
+                >
                   Share
                 </button>
+                <Popover
+                  id={elId}
+                  open={shareOpen}
+                  anchorEl={anchorEl}
+                  onClose={handleShareClose}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "left",
+                  }}
+                >
+                  <div className="p-3">
+                    <FacebookShareButton url={fullPath}>
+                      <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                    </FacebookShareButton>
+                    <WhatsappShareButton url={fullPath}>
+                      <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                    </WhatsappShareButton>
+                    <TelegramShareButton url={fullPath}>
+                      <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                    </TelegramShareButton>
+                    <TwitterShareButton url={fullPath}>
+                      <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                    </TwitterShareButton>
+                    <EmailShareButton url={fullPath}>
+                      <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                    </EmailShareButton>
+                  </div>
+                </Popover>
               </div>
               <div>
                 <h1 className="text-4xl font-bold">{title}</h1>
@@ -649,7 +736,8 @@ const Grifter = () => {
                     />
 
                     <p className="ml-2 font-semibold">
-                      Artist <Link href={`/pages/${artist}`}>{artist}</Link>
+                      Artist{" "}
+                      <Link href={`/pages/${artist}`}>{influencerName}</Link>
                     </p>
                   </div>
 
@@ -661,7 +749,8 @@ const Grifter = () => {
                         alt=""
                       />
                       <p className="ml-2 font-semibold">
-                        Owner <Link href={`/pages/${owner}`}>{owner}</Link>
+                        Owner{" "}
+                        <Link href={`/pages/${owner}`}>{ownerDisplayName}</Link>
                       </p>
                     </div>
                   )}
@@ -709,35 +798,89 @@ const Grifter = () => {
                   </div>
                   {status === "offchain" && (
                     <>
-                      {notEnoughUsdc || notEnoughSol ? (
+                      {userName === influencerId.toString() ? (
                         <>
                           <button
-                            disabled
-                            className=" border-none text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                          >
-                            Mint Now
-                          </button>
-                          <p className="text-sm my-4 text text-center font-semibold justify-center flex">
-                            Please fund your wallet to be able to mint the token{" "}
-                            <img
-                              src="/assets/usdc.webp"
-                              className="w-4 h-4 mt-1 ml-1"
-                            />
-                          </p>
-                          <button
+                            onClick={handleShareClick}
                             className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                            onClick={showTopup}
                           >
-                            Fund your wallet
+                            Share with your fans
                           </button>
+                          <Popover
+                            id={elId}
+                            open={shareOpen}
+                            anchorEl={anchorEl}
+                            onClose={handleShareClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "left",
+                            }}
+                          >
+                            <div className="p-3">
+                              <FacebookShareButton url={fullPath}>
+                                <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </FacebookShareButton>
+                              <WhatsappShareButton url={fullPath}>
+                                <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </WhatsappShareButton>
+                              <TelegramShareButton url={fullPath}>
+                                <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </TelegramShareButton>
+                              <TwitterShareButton url={fullPath}>
+                                <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </TwitterShareButton>
+                              <EmailShareButton url={fullPath}>
+                                <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                              </EmailShareButton>
+                            </div>
+                          </Popover>
                         </>
                       ) : (
-                        <button
-                          className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
-                          onClick={handleMint}
-                        >
-                          Mint Now
-                        </button>
+                        <>
+                          {notEnoughUsdc || notEnoughSol ? (
+                            <>
+                              <button
+                                disabled
+                                className=" border-none flex justify-center text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                              >
+                                <span className="flex">
+                                  Buy now {price / 1_000_000}{" "}
+                                  <img
+                                    src="/assets/usdc.webp"
+                                    className="h-4 w-4 mt-1 ml-1 opacity-60"
+                                  />
+                                </span>
+                              </button>
+                              <p className="text-sm my-4 text text-center font-semibold justify-center flex">
+                                Please fund your wallet to be able to mint the
+                                token{" "}
+                                <img
+                                  src="/assets/usdc.webp"
+                                  className="w-4 h-4 mt-1 ml-1"
+                                />
+                              </p>
+                              <button
+                                className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                                onClick={showTopup}
+                              >
+                                Fund your wallet
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={handleMint}
+                              className=" border-none flex justify-center text-white bg-[#635BFF] hover:bg-[#8983fa]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            >
+                              <span className="flex">
+                                Buy now ${price / 1_000_000}{" "}
+                                <img
+                                  src="/assets/usdc.webp"
+                                  className="h-4 w-4 mt-1 ml-1"
+                                />
+                              </span>
+                            </button>
+                          )}
+                        </>
                       )}
                     </>
                   )}
@@ -833,10 +976,16 @@ const Grifter = () => {
                         <>
                           <button
                             disabled
-                            className="border-none text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                            className="border-none flex justify-center text-white bg-[#b7b4f3]  px-3 w-full pb-3 pt-3 rounded-full font-semibold"
                             // onClick={handleBuy}
                           >
-                            Buy Now for ${currentPrice} USDC
+                            <span className="flex">
+                              Buy now ${price / 1_000_000}{" "}
+                              <img
+                                src="/assets/usdc.webp"
+                                className="h-4 w-4 mt-1 ml-1 opacity-80"
+                              />
+                            </span>
                           </button>
                           <p className="text-sm my-4 text text-center font-semibold justify-center flex">
                             Please fund your wallet to be able to buy the token{" "}
@@ -854,10 +1003,16 @@ const Grifter = () => {
                         </>
                       ) : (
                         <button
-                          className="mt-1 border-none text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                          className="mt-1 border-none flex justify-center text-white bg-[#635BFF] hover:bg-[#8983fa] px-3 w-full pb-3 pt-3 rounded-full font-semibold"
                           onClick={handleBuy}
                         >
-                          Buy Now for ${currentPrice} USDC
+                          <span className="flex">
+                            Buy now ${price / 1_000_000}{" "}
+                            <img
+                              src="/assets/usdc.webp"
+                              className="h-4 w-4 mt-1 ml-1"
+                            />
+                          </span>
                         </button>
                       )}
                     </>
@@ -924,23 +1079,21 @@ const Grifter = () => {
                   ))}
                 </div>
               </div>
-              <div className="mt-6">
-                <h1 className="font-bold text-xl">Tags</h1>
-                <div className="flex mt-4">
-                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                    green
-                  </span>
-                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                    blue
-                  </span>
-                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                    yellow
-                  </span>
-                  <span className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2">
-                    orange
-                  </span>
+              {hashtags.length !== 0 && (
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">Hashtags</h1>
+                  <div className="flex mt-4">
+                    {hashtags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="py-0 px-3 rounded-full border-1 border-black border hover:bg-black hover:text-white cursor-pointer mr-2"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
           <Modal
@@ -949,7 +1102,7 @@ const Grifter = () => {
             aria-labelledby="modal-modal-title"
             aria-describedby="modal-modal-description"
           >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white drop-shadow-xl rounded-3xl p-4">
+            <div className="absolute top-1/2 h-80 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white drop-shadow-xl rounded-3xl p-4">
               <div className="relative -top-12 px-8">
                 <div className="flex justify-center ">
                   {mediaType === "video/mp4" ? (
@@ -985,27 +1138,48 @@ const Grifter = () => {
                   >
                     View NFT
                   </a>
-                  {/* </Link> */}
-                </div>
-                <div className="relative mb-4">
-                  <div className="absolute border-t border-black w-full"></div>
-                  <p className="text-center relative -top-3">
-                    <span className="bg-white px-2 font-semibold">or</span>
-                  </p>
-                  <p className="text-center text-sm text-gray-700 font-bold">
-                    More you can do
-                  </p>
-                </div>
-                <div className="grid grid-rows-3 gap-2">
-                  <button className="py-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white">
+                  <button
+                    onClick={handleShareClick}
+                    className="py-2 rounded-full mt-2 font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white"
+                  >
                     Share your NFT
                   </button>
+                  <Popover
+                    id={elId}
+                    open={shareOpen}
+                    anchorEl={anchorEl}
+                    onClose={handleShareClose}
+                    anchorOrigin={{
+                      vertical: "bottom",
+                      horizontal: "left",
+                    }}
+                  >
+                    <div className="p-3">
+                      <FacebookShareButton url={fullPath}>
+                        <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                      </FacebookShareButton>
+                      <WhatsappShareButton url={fullPath}>
+                        <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                      </WhatsappShareButton>
+                      <TelegramShareButton url={fullPath}>
+                        <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                      </TelegramShareButton>
+                      <TwitterShareButton url={fullPath}>
+                        <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                      </TwitterShareButton>
+                      <EmailShareButton url={fullPath}>
+                        <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                      </EmailShareButton>
+                    </div>
+                  </Popover>
                 </div>
+
+                <div className="grid grid-rows-3 gap-2"></div>
               </div>
             </div>
           </Modal>
           <div className="mt-8">
-            <h1 className="font-bold text-xl">More from {influencerId}</h1>
+            <h1 className="font-bold text-xl">More from {influencerName}</h1>
           </div>
           <div className="grid mt-8 md:grid-cols-3 lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-6">
             {relatedItems.map((nft, i) => (

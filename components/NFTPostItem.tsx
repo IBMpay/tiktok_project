@@ -13,7 +13,7 @@ function NFTPostItem({
   description,
   provider,
 }) {
-  // console.log("id=", id);
+  console.log("id=", id.toString());
   return (
     <div className=" rounded-xl overflow-hidden drop-shadow-md cursor-pointer hover:scale-105 ease-in-out duration-300">
       <a href={`${baseLink}/${id}`}>

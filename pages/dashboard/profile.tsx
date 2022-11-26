@@ -68,6 +68,7 @@ const Profile = () => {
   const [snackbarMode, setSnackbarMode] = useState<AlertColor>("warning");
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [open, setOpen] = useState(false);
+  const [onboarding, setOnboarding] = useState<boolean>(false);
   const handleClick = () => {
     setOpen(true);
   };
@@ -113,6 +114,7 @@ const Profile = () => {
       if (provider) {
         try {
           const user = await getUser();
+          console.log("the user: ****", user);
           const username = user.email.split("@", 1)[0].replace(".", "");
           setMyUserName(username);
           const userRef = doc(db, "users", username);
@@ -128,12 +130,20 @@ const Profile = () => {
             setAvatarUrl(userData.avatarUrl);
             setBioDescription(userData.bioDescription);
             setEmail(userData.email);
+            if (!userData.onboarded) {
+              setOnboarding(true);
+            }
             // setIsInfluencer(userData.isInfluencer);
             // if (userData.isInfluencer) {
             //   setFollowerCount(userData.followerCount);
             //   setFollowingCount(userData.followingCount);
             //   setLikesCount(userData.likesCount);
             // }
+          } else {
+            setFullName(user.name);
+            setAvatarUrl(user.profileImage);
+            setEmail(user.email);
+            setOnboarding(true);
           }
         } catch (error) {
           console.log(error);
@@ -161,9 +171,17 @@ const Profile = () => {
         avatarUrl,
         bioDescription,
       });
+      if (onboarding) {
+        await updateDoc(userRef, {
+          onboarded: true,
+        });
+      }
       setSnackbarMode("success");
       setSnackbarMessage("Your profile has been updated!");
       setOpen(true);
+      if (onboarding) {
+        router.push("/dashboard/create?onboarding=true");
+      }
       // } else {
       //   await updateDoc(userRef, {
       //     name: fullName,
@@ -216,7 +234,7 @@ const Profile = () => {
                 user profile
               </p>
               <h1 className="capitalize font-bold text-3xl text-center">
-                Add Profile Details
+                {onboarding ? "Add Profile Details" : "Edit Profile Details"}
               </h1>
             </div>
 
@@ -414,11 +432,20 @@ const Profile = () => {
                 </button>
               </div>
               <div className="mt-3">
-                <Link href="/dashboard/create">
-                  <button className="mt-3  text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white px-3 w-full pb-3 pt-3 rounded-full font-semibold">
-                    I will do it later
+                {onboarding ? (
+                  <Link href="/dashboard/create?onboarding=true">
+                    <button className="mt-3  text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white px-3 w-full pb-3 pt-3 rounded-full font-semibold">
+                      I will do it later
+                    </button>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={router.back}
+                    className="mt-3  text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white px-3 w-full pb-3 pt-3 rounded-full font-semibold"
+                  >
+                    Back
                   </button>
-                </Link>
+                )}
               </div>
               {/* <div className="mt-4">
                   <button

@@ -1,4 +1,4 @@
-import { Container } from "@mui/material";
+import { Container, Modal, Popover } from "@mui/material";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Button from "../../../components/Button";
@@ -35,11 +35,24 @@ import Header from "../../../components/Header";
 import Link from "next/link";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import {
+  FacebookShareButton,
+  FacebookIcon,
+  WhatsappIcon,
+  WhatsappShareButton,
+  TwitterShareButton,
+  TwitterIcon,
+  EmailShareButton,
+  EmailIcon,
+  TelegramIcon,
+  TelegramShareButton,
+} from "react-share";
 
 const Profile = () => {
   const router = useRouter();
   const { influencerId } = router.query;
-  console.log("the slug", influencerId);
+  const { created } = router.query;
+  console.log("the slug", router.query);
   const {
     provider,
     login,
@@ -76,14 +89,36 @@ const Profile = () => {
   const [showCollected, setShowCollected] = useState<boolean>(false);
   const [follows, setFollows] = useState([]);
   const [hasFollowed, setHasFollowed] = useState<boolean>(false);
+  const [createdNft, setCreatedNft] = useState<string>("");
+  const [createdNftMediaUrl, setCreatedNftMediaUrl] = useState<string>("");
+  const [createdNftMediaType, setCreatedNftMediaType] = useState<string>("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const handleModalOpen = () => setModalOpen(true);
+  const handleModalClose = () => setModalOpen(false);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
+    null
+  );
+  const [fullPath, setFullPath] = useState<string>("");
+  const [createdNftPath, setCreatedNftPath] = useState<string>("");
 
+  const handleShareClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleShareClose = () => {
+    setAnchorEl(null);
+  };
+  const shareOpen = Boolean(anchorEl);
+  const elId = shareOpen ? "simple-popover" : undefined;
   console.log(influencerId);
   useEffect(() => {
     const init = async () => {
       // if (!isConnected && !isConnecting) router.push("/login");
       if (influencerId && provider) {
         try {
-          setPath(router.asPath);
+          setFullPath(`${window.location.origin}${router.asPath}`);
+
+          setPath(`/pages/${influencerId}`);
           console.log("the pubki: ", connection);
           const influencerUsername = influencerId.toString();
           console.log(influencerUsername);
@@ -149,6 +184,36 @@ const Profile = () => {
   }, [influencerId, provider]);
 
   useEffect(() => {
+    const init = async () => {
+      if (influencerId && provider && created) {
+        setCreatedNftPath(
+          `${window.location.origin}pages/${influencerId}/${created}`
+        );
+        console.log(`/pages/${influencerId}/${created}`);
+        try {
+          const collectibleRef = doc(
+            db,
+            "users",
+            influencerId.toString(),
+            "collectibles",
+            created.toString()
+          );
+          const collectibleSnapshot = await getDoc(collectibleRef);
+          console.log("data: ", collectibleSnapshot.data());
+          // if (collectibleSnapshot.exists()) {
+          setCreatedNftMediaType(collectibleSnapshot.data().mediaType);
+          setCreatedNftMediaUrl(collectibleSnapshot.data().videoUrl);
+          setCreatedNft(created.toString());
+          setModalOpen(true);
+          // }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    };
+    init();
+  }, [created, influencerId, provider]);
+  useEffect(() => {
     if (influencerId && provider && myUsername) {
       console.log("my username: ", myUsername);
       onSnapshot(collection(db, "users", myUsername, "follows"), (snapshot) => {
@@ -160,14 +225,16 @@ const Profile = () => {
 
   useEffect(() => {
     if (influencerId && provider) {
+      console.log("new new new new ");
       onSnapshot(doc(db, "users", influencerId.toString()), (snapshot) => {
-        if (snapshot.data().followers)
-          setFollowersCount(snapshot.data().followers);
-        if (snapshot.data().following)
-          setFollowingCount(snapshot.data().followings);
+        // if (snapshot.data().followers)
+        setFollowersCount(snapshot.data().followers);
+        // if (snapshot.data().followings)
+        setFollowingCount(snapshot.data().followings);
       });
     }
-  }, [follows]);
+  }, [follows, influencerId]);
+
   useEffect(
     () =>
       setHasFollowed(
@@ -301,9 +368,40 @@ const Profile = () => {
                             Follow
                           </button>
                         )}
-                        <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
+                        <button
+                          onClick={handleShareClick}
+                          className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white"
+                        >
                           Share
                         </button>
+                        <Popover
+                          id={elId}
+                          open={shareOpen}
+                          anchorEl={anchorEl}
+                          onClose={handleShareClose}
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "left",
+                          }}
+                        >
+                          <div className="p-3">
+                            <FacebookShareButton url={fullPath}>
+                              <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </FacebookShareButton>
+                            <WhatsappShareButton url={fullPath}>
+                              <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </WhatsappShareButton>
+                            <TelegramShareButton url={fullPath}>
+                              <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </TelegramShareButton>
+                            <TwitterShareButton url={fullPath}>
+                              <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </TwitterShareButton>
+                            <EmailShareButton url={fullPath}>
+                              <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                            </EmailShareButton>
+                          </div>
+                        </Popover>
                       </div>
                     )}
                   </div>
@@ -350,6 +448,84 @@ const Profile = () => {
                 </div>
               </div>
             </div>
+            <Modal
+              open={modalOpen}
+              onClose={handleModalClose}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
+            >
+              <div className="absolute top-1/2 h-80 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 bg-white drop-shadow-xl rounded-3xl p-4">
+                <div className="relative -top-12 px-8">
+                  <div className="flex justify-center ">
+                    {createdNftMediaType === "video/mp4" ? (
+                      <div className="flex justify-center relative -top-6">
+                        <video
+                          width="128"
+                          height="128"
+                          className="h-32 w-32 rounded-xl justify-centers"
+                        >
+                          <source src={createdNftMediaUrl} type="video/mp4" />
+                          sample
+                        </video>
+                      </div>
+                    ) : (
+                      <img
+                        className="h-32 w-32 rounded-xl justify-centers"
+                        src={createdNftMediaUrl}
+                      />
+                    )}
+                  </div>
+
+                  <div className="mt-4">
+                    <h1 className="capitalize text-3xl font-bold text-center">
+                      congratulations!
+                    </h1>
+                    <p className="text-center  mt-2">You created an NFT.</p>
+                  </div>
+                  <div className="grid grid-rows-1 mb-6 mt-2">
+                    <Link href={`/pages/${influencerId}/${createdNft}`}>
+                      <p className=" border-none text-white bg-[#635BFF] hover:bg-[#8983fa] cursor-pointer px-3 w-full pb-3 pt-3 rounded-full font-semibold text-center">
+                        View NFT
+                      </p>
+                    </Link>
+                    <button
+                      onClick={handleShareClick}
+                      className="py-2 mt-2 rounded-full font-semibold text-[#635BFF] border-2 border-[#635BFF] hover:bg-[#635BFF] hover:text-white"
+                    >
+                      Share your NFT
+                    </button>
+                    <Popover
+                      id={elId}
+                      open={shareOpen}
+                      anchorEl={anchorEl}
+                      onClose={handleShareClose}
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "left",
+                      }}
+                    >
+                      <div className="p-3">
+                        <FacebookShareButton url={createdNftPath}>
+                          <FacebookIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </FacebookShareButton>
+                        <WhatsappShareButton url={createdNftPath}>
+                          <WhatsappIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </WhatsappShareButton>
+                        <TelegramShareButton url={createdNftPath}>
+                          <TelegramIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </TelegramShareButton>
+                        <TwitterShareButton url={createdNftPath}>
+                          <TwitterIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </TwitterShareButton>
+                        <EmailShareButton url={createdNftPath}>
+                          <EmailIcon className="h-8 w-8 mr-3 rounded-lg" />
+                        </EmailShareButton>
+                      </div>
+                    </Popover>
+                  </div>
+                </div>
+              </div>
+            </Modal>
           </Container>
         </>
       ) : (

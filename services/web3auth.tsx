@@ -242,6 +242,8 @@ export const Web3AuthProvider: FunctionComponent<IWeb3AuthState> = ({
               name: user.name,
               wallet: wallets[0],
               email: user.email,
+              followers: 0,
+              followings: 0,
             });
           }
         } catch (error) {

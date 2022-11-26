@@ -1,14 +1,22 @@
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import {
+  ArrowRightOnRectangleIcon,
+  Bars3Icon,
+  WalletIcon,
+} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { useWeb3Auth } from "../services/web3auth";
+import { doc, getDoc } from "@firebase/firestore";
+import { db } from "../firebase-config";
+import Image from "next/image";
+import { Tooltip } from "@mui/material";
 
 function Header() {
   const { logout, getUser, provider } = useWeb3Auth();
   const [userName, setUserName] = useState<string>();
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const toggleOpen = () => {
     if (menuOpen) setMenuOpen(false);
     else setMenuOpen(true);
@@ -17,6 +25,13 @@ function Header() {
     const init = async () => {
       const user = await getUser();
       const username = user.email.split("@", 1)[0].replace(".", "");
+      const userRef = doc(db, "users", username);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        setAvatarUrl(userSnap.data().avatarUrl);
+      } else {
+        setAvatarUrl("/assets/Rectangle.png");
+      }
       setUserName(username);
     };
     init();
@@ -29,18 +44,15 @@ function Header() {
   };
   return (
     <div className="mb-10">
-      <div
-        className=" fixed top-0 left-0 right-0 hidden md:block"
-        style={{ zIndex: 100000 }}
-      >
-        <div className="flex py-4 border-b  px-8  border-gray-200 bg-white justify-between">
+      <div className=" fixed top-0 left-0 right-0 " style={{ zIndex: 100000 }}>
+        <div className="flex py-2 border-b  px-8  border-gray-200 bg-white justify-between">
           <div className="flex">
-            <div className="cursor-pointer">
+            <div className="cursor-pointer py-2">
               <Link href="/dashboard">
-                <img src="/assets/logo.png" className="h-6" />
+                <img src="/assets/logo.png" className="h-7" />
               </Link>
             </div>
-            <div className="flex ml-4">
+            {/* <div className="flex ml-4">
               <Link href="/dashboard">
                 <p className="capitalize font-semibold ml-4 cursor-pointer hover:text-[#635BFF]">
                   dashboard
@@ -56,24 +68,43 @@ function Header() {
                   Create
                 </p>
               </Link>
-            </div>
+            </div> */}
           </div>
           <div className="flex">
-            <Link href={`/pages/${userName}`}>
-              <p className="capitalize font-semibold mr-3 cursor-pointer hover:text-[#635BFF]">
-                Visit page
-              </p>
+            <Link href={`/dashboard/create`}>
+              <button className="capitalize py-2 font-semibold mr-3 cursor-pointer hover:text-[#635BFF]">
+                Create
+              </button>
             </Link>
-            <p
-              onClick={logout}
-              className="capitalize font-semibold mr-3 cursor-pointer hover:text-[#635BFF]"
-            >
-              Logout
-            </p>
+            <Link href={`/pages/${userName}`}>
+              <Tooltip title="view page" placement="bottom">
+                <div className=" mr-4  cursor-pointer ">
+                  <Image
+                    src={avatarUrl}
+                    width={42}
+                    height={42}
+                    className="rounded-full border-2 hover:border-blue-500"
+                  />
+                </div>
+              </Tooltip>
+            </Link>
+
+            <Link href={`/dashboard`}>
+              <Tooltip title="View-wallet" placement="bottom">
+                <button className="py-2">
+                  <WalletIcon className="h-7 w-7 mr-4 cursor-pointer hover:text-[#635BFF]" />
+                </button>
+              </Tooltip>
+            </Link>
+            <Tooltip title="Logout" placement="bottom">
+              <button className="py-2" onClick={logout}>
+                <ArrowRightOnRectangleIcon className="h-7 w-7 mr-4 cursor-pointer hover:text-[#635BFF]" />
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>
-      <div
+      {/* <div
         className=" fixed top-0 left-0 z-100 right-0 md:hidden"
         style={{ zIndex: 100000 }}
       >
@@ -133,7 +164,7 @@ function Header() {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
