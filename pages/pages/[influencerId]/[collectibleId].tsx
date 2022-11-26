@@ -1191,89 +1191,91 @@ const Grifter = () => {
                   </div>
                 </div>
               </div>
-              <div className="mt-6">
-                <h1 className="font-bold text-xl">History</h1>
-                <div className="mt-4 max-h-96 overflow-y-scroll">
-                  {transactions.map((transaction, i) => (
-                    <>
-                      {transaction.type === "list" && (
-                        <div className="flex items-center mb-3" key={i}>
-                          <div className="mr-4">
-                            <img src="/assets/ellips.png" />
+              {transactions.length !== 0 && (
+                <div className="mt-6">
+                  <h1 className="font-bold text-xl">History</h1>
+                  <div className="mt-4 max-h-96 overflow-y-scroll">
+                    {transactions.map((transaction, i) => (
+                      <>
+                        {transaction.type === "list" && (
+                          <div className="flex items-center mb-3" key={i}>
+                            <div className="mr-4">
+                              <img src="/assets/ellips.png" />
+                            </div>
+                            <div className=" text-md">
+                              <p className="">
+                                {transaction.from} listed the token for{" "}
+                                {transaction.price}
+                                <img
+                                  src="/assets/usdc.webp"
+                                  className="w-4 h-4 ml-1 inline-block"
+                                />
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {dateFormat(
+                                  transaction.timestamp.toDate(),
+                                  "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                                )}
+                              </p>
+                            </div>
                           </div>
-                          <div className=" text-md">
-                            <p className="">
-                              {transaction.from} listed the token for{" "}
-                              {transaction.price}
-                              <img
-                                src="/assets/usdc.webp"
-                                className="w-4 h-4 ml-1 inline-block"
-                              />
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {dateFormat(
-                                transaction.timestamp.toDate(),
-                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {transaction.type === "buy" && (
-                        <div className="flex items-center mb-3" key={i}>
-                          <div className="mr-4">
-                            <img src="/assets/ellips.png" />
-                          </div>
-                          <div className=" text-md">
-                            {transaction.to} boughts the token
-                            {/*  for{" "}
+                        )}
+                        {transaction.type === "buy" && (
+                          <div className="flex items-center mb-3" key={i}>
+                            <div className="mr-4">
+                              <img src="/assets/ellips.png" />
+                            </div>
+                            <div className=" text-md">
+                              {transaction.to} boughts the token
+                              {/*  for{" "}
                             {transaction.price}
                             usdc */}
-                            <p className="text-xs text-gray-500 mt-1">
-                              {dateFormat(
-                                transaction.timestamp.toDate(),
-                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
-                              )}
-                            </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {dateFormat(
+                                  transaction.timestamp.toDate(),
+                                  "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {transaction.type === "mint" && (
-                        <div className="flex items-center mb-3" key={i}>
-                          <div className="mr-4">
-                            <img src="/assets/ellips.png" />
+                        )}
+                        {transaction.type === "mint" && (
+                          <div className="flex items-center mb-3" key={i}>
+                            <div className="mr-4">
+                              <img src="/assets/ellips.png" />
+                            </div>
+                            <div className=" text-md">
+                              {transaction.from} minted the token
+                              <p className="text-xs text-gray-500 mt-1">
+                                {dateFormat(
+                                  transaction.timestamp.toDate(),
+                                  "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                                )}
+                              </p>
+                            </div>
                           </div>
-                          <div className=" text-md">
-                            {transaction.from} minted the token
-                            <p className="text-xs text-gray-500 mt-1">
-                              {dateFormat(
-                                transaction.timestamp.toDate(),
-                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
-                              )}
-                            </p>
+                        )}
+                        {transaction.type === "delist" && (
+                          <div className="flex items-center mb-3" key={i}>
+                            <div className="mr-4">
+                              <img src="/assets/ellips.png" />
+                            </div>
+                            <div className=" text-md">
+                              {transaction.from} delisted the token
+                              <p className="text-xs text-gray-500 mt-1">
+                                {dateFormat(
+                                  transaction.timestamp.toDate(),
+                                  "dddd, mmmm dS, yyyy, h:MM:ss TT"
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {transaction.type === "delist" && (
-                        <div className="flex items-center mb-3" key={i}>
-                          <div className="mr-4">
-                            <img src="/assets/ellips.png" />
-                          </div>
-                          <div className=" text-md">
-                            {transaction.from} delisted the token
-                            <p className="text-xs text-gray-500 mt-1">
-                              {dateFormat(
-                                transaction.timestamp.toDate(),
-                                "dddd, mmmm dS, yyyy, h:MM:ss TT"
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ))}
+                        )}
+                      </>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               {hashtags.length !== 0 && (
                 <div className="mt-6">
                   <h1 className="font-bold text-xl">Hashtags</h1>
