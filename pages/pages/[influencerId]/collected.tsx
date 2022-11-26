@@ -320,7 +320,7 @@ const Profile = () => {
                           onClick={() => console.log("shared successfully!")}
                         >
                           <button className="text-center text-gray-500 px-6 border border-1 border-gray-500 rounded-md w-full hover:bg-[#635BFF] hover:text-white">
-                            Share on Web
+                            Share
                           </button>
                         </RWebShare>
                       ) : (
