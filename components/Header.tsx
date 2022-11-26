@@ -48,9 +48,9 @@ function Header() {
         <div className="flex py-2 border-b  px-8  border-gray-200 bg-white justify-between">
           <div className="flex">
             <div className="cursor-pointer py-2">
-              <Link href="/dashboard">
+              <a href="https//ayoo.site">
                 <img src="/assets/logo.png" className="h-7" />
-              </Link>
+              </a>
             </div>
             {/* <div className="flex ml-4">
               <Link href="/dashboard">
