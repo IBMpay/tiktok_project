@@ -123,9 +123,9 @@ const Grifter = () => {
   useEffect(() => {
     const init = async () => {
       // if (!isConnected && !isConnecting) router.push("/login");
-
       if (influencerId && collectibleId && provider) {
         try {
+          setIsMobileBrowser(isMobile());
           setFullPath(`${window.location.origin}${router.asPath}`);
           setPath(router.asPath);
           const influencerUsername = influencerId.toString();

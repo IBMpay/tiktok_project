@@ -118,6 +118,7 @@ const Profile = () => {
       // if (!isConnected && !isConnecting) router.push("/login");
       if (influencerId && provider) {
         try {
+          setIsMobileBrowser(isMobile());
           setFullPath(`${window.location.origin}${router.asPath}`);
 
           setPath(`/pages/${influencerId}`);
